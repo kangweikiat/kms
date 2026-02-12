@@ -31,6 +31,7 @@ export default async function LoginPage({
                             name="email"
                             type="email"
                             required
+                            defaultValue="admin@maria.my"
                             placeholder="admin@maria.my"
                             className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         />
@@ -44,6 +45,7 @@ export default async function LoginPage({
                             name="password"
                             type="password"
                             required
+                            defaultValue="P@ssw0rd!@#$"
                             placeholder="••••••••"
                             className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         />

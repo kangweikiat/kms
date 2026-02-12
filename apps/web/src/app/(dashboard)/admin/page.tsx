@@ -1,45 +1,74 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { prisma } from '@kms/database'
+import { getDashboardStats } from './actions'
+import { StatCard } from './_components/stat-card'
+import { EnrollmentGrowthChart } from './_components/enrollment-chart'
+import { AgeDistributionChart } from './_components/age-chart'
+import { YearSelect } from './_components/year-select'
+import { Users, GraduationCap, TrendingUp } from 'lucide-react'
 
-export default async function AdminDashboard() {
-    const supabase = await createClient()
+interface PageProps {
+    searchParams: { [key: string]: string | string[] | undefined }
+}
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-        return redirect('/login')
-    }
-
-    // Example: Fetch data using the shared Prisma client
-    // Note: This requires the Postgres database to be running
-    const studentCount = await prisma.student.count()
-    const classCount = await prisma.class.count()
+export default async function AdminDashboard({ searchParams }: PageProps) {
+    const { year: yearParam } = await searchParams
+    const year = Number(yearParam) || 2026
+    const stats = await getDashboardStats(year)
 
     return (
-        <div className="p-8">
-            <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
-            <p className="mb-8">Welcome, {user.email}</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <a href="/admin/students" className="block hover:shadow-md transition-shadow">
-                    <div className="border p-6 rounded-lg shadow-sm bg-white h-full">
-                        <h2 className="text-xl font-semibold mb-2">Students</h2>
-                        <p className="text-4xl font-bold text-blue-600">{studentCount}</p>
-                        <p className="text-gray-600">Total registered students</p>
-                    </div>
-                </a>
-                <div className="border p-6 rounded-lg shadow-sm bg-white">
-                    <h2 className="text-xl font-semibold mb-2">Classes</h2>
-                    <p className="text-4xl font-bold text-green-600">{classCount}</p>
-                    <p className="text-gray-600">Active classes</p>
+        <div className="p-8 max-w-7xl mx-auto space-y-8">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                    <p className="text-gray-500 mt-1">
+                        Welcome back, {stats.userEmail}
+                    </p>
                 </div>
-                <div className="border p-6 rounded-lg shadow-sm bg-white">
-                    <h2 className="text-xl font-semibold mb-2">Fees</h2>
-                    <p className="text-4xl font-bold text-orange-600">-</p>
-                    <p className="text-gray-600">Manage payments</p>
+                <div className="mt-4 md:mt-0">
+                    <YearSelect />
+                </div>
+            </div>
+
+            {/* Key Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StatCard
+                    title="Total Students"
+                    value={stats.totalStudents}
+                    description={`Active enrollments for ${year}`}
+                    icon={Users}
+                />
+                <StatCard
+                    title="Active Classes"
+                    value={stats.activeClasses}
+                    description="Opened classes"
+                    icon={GraduationCap}
+                />
+                <StatCard
+                    title="Growth Rate"
+                    value={`+${stats.growthRate}`}
+                    description="Month-over-Month"
+                    icon={TrendingUp}
+                />
+            </div>
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Enrollment Growth - Takes up 2/3 width on large screens */}
+                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div className="mb-6">
+                        <h2 className="text-lg font-bold text-gray-900">Enrollment Growth</h2>
+                        <p className="text-sm text-gray-500">Cumulative students over time</p>
+                    </div>
+                    <EnrollmentGrowthChart data={stats.enrollments} intakeYear={year} />
+                </div>
+
+                {/* Age Distribution - Takes up 1/3 width */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div className="mb-6">
+                        <h2 className="text-lg font-bold text-gray-900">Age Distribution</h2>
+                        <p className="text-sm text-gray-500">Students by age group</p>
+                    </div>
+                    <AgeDistributionChart data={stats.ageDistribution} />
                 </div>
             </div>
         </div>

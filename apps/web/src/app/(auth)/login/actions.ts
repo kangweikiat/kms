@@ -34,7 +34,11 @@ export async function login(formData: FormData) {
             return redirect('/login?message=Unauthorized access: Admin only')
         }
     } catch (err) {
-        console.error('Role verification failed:', err)
+        console.error('Role verification failed:', JSON.stringify(err, null, 2))
+        if (err instanceof Error) {
+            console.error(err.message)
+            console.error(err.stack)
+        }
         await (await supabase).auth.signOut()
         return redirect('/login?message=System error. Please contact a tech.')
     }
