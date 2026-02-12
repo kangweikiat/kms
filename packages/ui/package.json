@@ -1,0 +1,21 @@
+{
+    "name": "@kms/ui",
+    "version": "0.0.0",
+    "private": true,
+    "license": "MIT",
+    "exports": {
+        "./*": "./src/*.tsx"
+    },
+    "dependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    },
+    "devDependencies": {
+        "@kms/eslint-config": "workspace:*",
+        "@kms/typescript-config": "workspace:*",
+        "@types/react": "^18.2.0",
+        "@types/react-dom": "^18.2.0",
+        "eslint": "^8.56.0",
+        "typescript": "^5.3.0"
+    }
+}

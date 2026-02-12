@@ -1,0 +1,13 @@
+{
+    "name": "@kms/typescript-config",
+    "version": "0.0.0",
+    "private": true,
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "main": "base.json",
+    "exports": {
+        "./base.json": "./base.json"
+    }
+}
