@@ -1,6 +1,6 @@
 import { prisma } from '@kms/database'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, Eye, Pencil } from 'lucide-react'
 
 export default async function StudentsPage() {
     const students = await prisma.student.findMany({
@@ -29,11 +29,12 @@ export default async function StudentsPage() {
                             <th className="px-6 py-4 text-sm font-medium text-gray-500">Level</th>
                             <th className="px-6 py-4 text-sm font-medium text-gray-500">Program</th>
                             <th className="px-6 py-4 text-sm font-medium text-gray-500">Status</th>
+                            <th className="px-6 py-4 text-sm font-medium text-gray-500 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {students.map((student) => (
-                            <tr key={student.id} className="hover:bg-gray-50">
+                            <tr key={student.id} className="hover:bg-gray-50 transition cursor-pointer">
                                 <td className="px-6 py-4">
                                     <div className="font-medium text-gray-900">{student.firstName} {student.lastName}</div>
                                     <div className="text-xs text-gray-500">{student.icNo}</div>
@@ -50,15 +51,26 @@ export default async function StudentsPage() {
                                         Active
                                     </span>
                                 </td>
+                                <td className="px-6 py-4 text-sm text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <Link
+                                            href={`/admin/students/${student.id}`}
+                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </Link>
+                                        <Link
+                                            href={`/admin/students/${student.id}/edit`}
+                                            className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </Link>
+                                    </div>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
-                {students.length === 0 && (
-                    <div className="p-12 text-center text-gray-500">
-                        No students found. Click "New Student" to add one.
-                    </div>
-                )}
             </div>
         </div>
     )
