@@ -2,13 +2,37 @@ import { prisma } from '@kms/database'
 import Link from 'next/link'
 import { ArrowLeft, Pencil } from 'lucide-react'
 import { notFound } from 'next/navigation'
+import { cookies } from 'next/headers'
+import { ProgramBadge } from '../_components/program-badge'
+import { DeleteButton } from '../_components/delete-button'
+import { ReactivateButton } from '../_components/reactivate-button'
+import { HardDeleteButton } from '../_components/hard-delete-button'
 
-export default async function StudentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function StudentDetailsPage({
+    params,
+    searchParams
+}: {
+    params: Promise<{ id: string }>
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
     const { id } = await params
+    const sp = await searchParams
+
+    // Determine context year
+    const cookieStore = await cookies()
+    const cookieYear = cookieStore.get('admin_year')?.value
+    const yearParam = sp.year
+    const currentYear = yearParam ? Number(yearParam) : (cookieYear ? Number(cookieYear) : 2026)
+
     const student = await prisma.student.findUnique({
         where: { id },
         include: {
-            class: true,
+            enrollments: {
+                orderBy: { academicYear: 'asc' },
+                include: {
+                    class: true
+                }
+            },
             parent: {
                 include: {
                     user: true
@@ -20,6 +44,9 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
     if (!student) {
         return notFound()
     }
+
+    const enrollmentForYear = student.enrollments.find(e => e.academicYear === currentYear)
+    const isEnrolledActive = enrollmentForYear?.status === 'ACTIVE'
 
     return (
         <div className="max-w-4xl mx-auto space-y-8">
@@ -34,16 +61,33 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                     </Link>
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">{student.firstName} {student.lastName}</h1>
-                        <p className="text-sm text-gray-500">Student ID: {student.id}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <span>Student ID: {student.id}</span>
+                            {!isEnrolledActive && <span className="text-red-500 font-medium">({enrollmentForYear?.status || 'Inactive'})</span>}
+                        </div>
                     </div>
                 </div>
-                <Link
-                    href={`/admin/students/${student.id}/edit`}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium transition"
-                >
-                    <Pencil className="w-4 h-4" />
-                    Edit Student
-                </Link>
+                <div className="flex items-center gap-2">
+                    {isEnrolledActive && (
+                        <Link
+                            href={`/admin/students/${student.id}/edit${currentYear ? `?year=${currentYear}` : ''}`}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium transition"
+                        >
+                            <Pencil className="w-4 h-4" />
+                            Edit Student
+                        </Link>
+                    )}
+                    {isEnrolledActive ? (
+                        <DeleteButton id={student.id} year={currentYear} />
+                    ) : (
+                        <>
+                            <ReactivateButton id={student.id} year={currentYear} />
+                            {enrollmentForYear?.status === 'WITHDRAWN' && (
+                                <HardDeleteButton id={student.id} year={currentYear} />
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Content Grid */}
@@ -66,11 +110,19 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                         </div>
                         <div className="grid grid-cols-3">
                             <span className="text-sm text-gray-500">Gender</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.gender}</span>
+                            <span className="col-span-2 text-sm font-medium text-gray-900 capitalize">{student.gender.toLowerCase()}</span>
                         </div>
                         <div className="grid grid-cols-3">
                             <span className="text-sm text-gray-500">Race</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.race}</span>
+                            <span className="col-span-2 text-sm font-medium text-gray-900 capitalize">{student.race.toLowerCase()}</span>
+                        </div>
+                        <div className="grid grid-cols-3">
+                            <span className="text-sm text-gray-500">Religion</span>
+                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.religion || '-'}</span>
+                        </div>
+                        <div className="grid grid-cols-3">
+                            <span className="text-sm text-gray-500">Nationality</span>
+                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.nationality || '-'}</span>
                         </div>
                         <div className="grid grid-cols-3">
                             <span className="text-sm text-gray-500">Address</span>
@@ -79,43 +131,51 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                     </div>
                 </div>
 
-                {/* 2. Enrollment Details */}
+                {/* 2. Enrollment History */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">
-                        Enrollment Details
-                    </h2>
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Intake Year</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.enrollmentYear}</span>
-                        </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Level</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.enrollmentLevel}</span>
-                        </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Program</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    {student.programType.replace(/_/g, ' ')}
-                                </span>
-                            </span>
-                        </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Transport</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">
-                                {student.transport ? 'Yes' : 'No'}
-                            </span>
-                        </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Status</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
-                                    Active
-                                </span>
-                            </span>
-                        </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                            Enrollment History
+                        </h2>
+                        <Link
+                            href={`/admin/students/${student.id}/enroll`}
+                            className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                        >
+                            + Enroll New Year
+                        </Link>
+                    </div>
+
+                    <div className="space-y-4">
+                        {student.enrollments && student.enrollments.length > 0 ? (
+                            student.enrollments.map((enrollment: any) => (
+                                <div key={enrollment.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-2">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <div className="font-semibold text-gray-900">{enrollment.academicYear} - {enrollment.enrollmentLevel}</div>
+                                            <div className="text-sm text-gray-500">
+                                                <ProgramBadge type={enrollment.programType} />
+                                            </div>
+                                        </div>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${enrollment.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                                            enrollment.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' :
+                                                'bg-gray-100 text-gray-800'
+                                            }`}>
+                                            {enrollment.status}
+                                        </span>
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                        Transport: {enrollment.transport ? 'Yes' : 'No'}
+                                    </div>
+                                    {enrollment.remarks && (
+                                        <div className="text-sm text-gray-500 italic mt-2">
+                                            "{enrollment.remarks}"
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-gray-500 text-sm">No enrollment records found.</p>
+                        )}
                     </div>
                 </div>
 
@@ -132,6 +192,8 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                                 <span className="col-span-2 text-sm text-gray-900">{student.fatherName || '-'}</span>
                                 <span className="text-sm text-gray-500">IC:</span>
                                 <span className="col-span-2 text-sm text-gray-900">{student.fatherIc || '-'}</span>
+                                <span className="text-sm text-gray-500">Occupation:</span>
+                                <span className="col-span-2 text-sm text-gray-900">{student.fatherOccupation || '-'}</span>
                             </div>
                         </div>
                         <div className="space-y-2">
@@ -141,6 +203,8 @@ export default async function StudentDetailsPage({ params }: { params: Promise<{
                                 <span className="col-span-2 text-sm text-gray-900">{student.motherName || '-'}</span>
                                 <span className="text-sm text-gray-500">IC:</span>
                                 <span className="col-span-2 text-sm text-gray-900">{student.motherIc || '-'}</span>
+                                <span className="text-sm text-gray-500">Occupation:</span>
+                                <span className="col-span-2 text-sm text-gray-900">{student.motherOccupation || '-'}</span>
                             </div>
                         </div>
                     </div>

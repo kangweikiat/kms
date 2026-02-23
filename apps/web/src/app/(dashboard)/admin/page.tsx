@@ -2,16 +2,22 @@ import { getDashboardStats } from './actions'
 import { StatCard } from './_components/stat-card'
 import { EnrollmentGrowthChart } from './_components/enrollment-chart'
 import { AgeDistributionChart } from './_components/age-chart'
-import { YearSelect } from './_components/year-select'
+
 import { Users, GraduationCap, TrendingUp } from 'lucide-react'
 
 interface PageProps {
     searchParams: { [key: string]: string | string[] | undefined }
 }
 
+import { cookies } from 'next/headers'
+
+// ... existing imports
+
 export default async function AdminDashboard({ searchParams }: PageProps) {
     const { year: yearParam } = await searchParams
-    const year = Number(yearParam) || 2026
+    const cookieStore = await cookies()
+    const year = Number(yearParam) || Number(cookieStore.get('admin_year')?.value) || 2026
+
     const stats = await getDashboardStats(year)
 
     return (
@@ -25,7 +31,7 @@ export default async function AdminDashboard({ searchParams }: PageProps) {
                     </p>
                 </div>
                 <div className="mt-4 md:mt-0">
-                    <YearSelect />
+                    {/* YearSelect moved to layout */}
                 </div>
             </div>
 

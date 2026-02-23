@@ -53,26 +53,28 @@ model Student {
   race      String
   address   String?
 
-  // Enrollment Details
-  enrollmentYear Int
-  enrollmentLevel EnrollmentLevel
-  programType     ProgramType
-  transport       Boolean @default(false)
+  // No enrollment details here anymore
+
+  // Personal Info
+  religion    String?
+  nationality String?
 
   // Parent Info
-  fatherName String?
-  fatherIc   String?
-  motherName String?
-  motherIc   String?
+  fatherName       String?
+  fatherIc         String?
+  fatherOccupation String?
+  motherName       String?
+  motherIc         String?
+  motherOccupation String?
 
   // Emergency Info
   emergencyName    String?
   emergencyPhone   String?
   emergencyAddress String?
 
-  classId String?
-  class   Class?  @relation(fields: [classId], references: [id])
-
+  enrollments Enrollment[]
+  
+  // existing relations
   parentId String?
   parent   ParentProfile? @relation(fields: [parentId], references: [id])
 
@@ -81,6 +83,35 @@ model Student {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+
+  academicYear    Int
+  enrollmentLevel EnrollmentLevel
+  programType     ProgramType
+  transport       Boolean @default(false)
+  remarks         String?
+  status          EnrollmentStatus @default(ACTIVE)
+
+  classId String?
+  class   Class?  @relation(fields: [classId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, academicYear])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  WITHDRAWN
 }
 
 enum EnrollmentLevel {
@@ -106,7 +137,7 @@ model Class {
   teacherId   String?
   teacher     TeacherProfile? @relation(fields: [teacherId], references: [id])
 
-  students Student[]
+  enrollments Enrollment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -134,4 +165,20 @@ model Fee {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AcademicYear {
+  id        String             @id @default(uuid())
+  year      Int                @unique
+  status    AcademicYearStatus @default(INACTIVE)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+enum AcademicYearStatus {
+  ACTIVE
+  COMPLETED
+  INACTIVE
 }

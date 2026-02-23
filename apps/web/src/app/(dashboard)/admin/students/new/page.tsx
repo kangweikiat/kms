@@ -1,8 +1,14 @@
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { prisma } from '@kms/database'
 import { StudentForm } from './_components/student-form'
 
-export default function NewStudentPage() {
+export default async function NewStudentPage() {
+    const availableYears = await prisma.academicYear.findMany({
+        orderBy: { year: 'asc' },
+        where: { OR: [{ status: 'ACTIVE' }, { status: 'COMPLETED' }] }
+    })
+
     return (
         <div className="max-w-4xl mx-auto space-y-8">
             {/* Header */}
@@ -19,7 +25,7 @@ export default function NewStudentPage() {
                 </div>
             </div>
 
-            <StudentForm />
+            <StudentForm availableYears={availableYears} />
         </div>
     )
 }

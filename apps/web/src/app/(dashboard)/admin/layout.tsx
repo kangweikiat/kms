@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { prisma, Role } from '@kms/database'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from './_components/sidebar'
+import { YearSelect } from './_components/year-select'
+import { cookies } from 'next/headers'
 
 export default async function AdminLayout({
     children,
@@ -30,6 +32,22 @@ export default async function AdminLayout({
         return redirect('/login?message=Unauthorized: Admin access required')
     }
 
+    const cookieStore = await cookies()
+    const initialYear = Number(cookieStore.get('admin_year')?.value) || 2026
+
+    // Fetch Academic Years for the dropdown
+    const availableYears = await prisma.academicYear.findMany({
+        orderBy: { year: 'asc' },
+        where: { OR: [{ status: 'ACTIVE' }, { status: 'COMPLETED' }] } // Only show active/completed in dropdown? Or all? User said "Manage years", maybe show all or just active/future. Let's show all for now but maybe filter in select? 
+        // User requirements: "create on my own... global dropdown". Usually global dropdown shows selectable reporting years.
+        // Let's fetch all for now, or maybe just 'ACTIVE' and 'COMPLETED' + the current Selected Year if it's inactive?
+        // For simplicity and admin visibility, let's fetch all that are NOT 'INACTIVE' unless explicitly selected.
+        // Actually, let's just fetch all and let YearSelect handle display logic or just show all for Admin.
+    })
+
+    // If no years exist (first run), maybe seed or fallback?
+    // Let's pass the raw list.
+
     return (
         <div className="flex h-screen bg-gray-100">
             <Sidebar />
@@ -42,6 +60,9 @@ export default async function AdminLayout({
                             <p className="text-sm font-medium text-gray-900">{dbUser.name || 'Admin User'}</p>
                             <p className="text-xs text-gray-500">{dbUser.email}</p>
                         </div>
+                        <div className="h-8 w-px bg-gray-200 mx-2 hidden md:block"></div>
+                        <YearSelect initialYear={initialYear} availableYears={availableYears} />
+                        <div className="h-8 w-px bg-gray-200 mx-2 hidden md:block"></div>
                         <form action={async () => {
                             'use server'
                             const supabase = createClient()
