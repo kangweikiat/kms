@@ -14,9 +14,11 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.prisma = void 0;
+exports.prisma = exports.PrismaClient = void 0;
 var client_1 = require("@prisma/client");
 __exportStar(require("@prisma/client"), exports);
+var client_2 = require("@prisma/client");
+Object.defineProperty(exports, "PrismaClient", { enumerable: true, get: function () { return client_2.PrismaClient; } });
 var globalForPrisma = global;
 exports.prisma = globalForPrisma.prisma ||
     new client_1.PrismaClient({

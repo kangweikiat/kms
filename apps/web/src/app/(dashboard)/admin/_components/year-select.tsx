@@ -1,28 +1,59 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Calendar } from 'lucide-react'
+import { setYearCookie } from '@/app/actions'
+import { useTransition } from 'react'
+import { AcademicYear } from '@kms/database'
 
-export function YearSelect() {
+interface YearSelectProps {
+    initialYear: number
+    availableYears?: AcademicYear[]
+}
+
+export function YearSelect({ initialYear, availableYears = [] }: YearSelectProps) {
     const router = useRouter()
+    const pathname = usePathname()
     const searchParams = useSearchParams()
-    const currentYear = Number(searchParams.get('year')) || 2026
+    const [isPending, startTransition] = useTransition()
+
+    // Priority: URL param > Server Cookie (initialYear) > Default
+    const currentYear = Number(searchParams.get('year')) || initialYear
+
+    // Use DB years if available, fallback to default logic if empty (e.g. before seeding)
+    // If DB is empty, user needs to go to settings to add years.
+    // For now, if empty, let's just show current year to avoid broken UI.
+    const hasYears = availableYears.length > 0
+    const years = hasYears ? availableYears : [{ year: 2026, status: 'ACTIVE', id: 'default' }]
 
     const handleYearChange = (year: string) => {
-        router.push(`/admin?year=${year}`)
-        router.refresh()
+        const yearNum = Number(year)
+
+        // 1. Update Cookie via Server Action
+        startTransition(() => {
+            setYearCookie(yearNum)
+        })
+
+        // 2. Update URL
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('year', year)
+        router.push(`${pathname}?${params.toString()}`)
     }
 
     return (
         <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border shadow-sm">
-            <Calendar className="w-4 h-4 text-gray-500" />
+            <Calendar className={`w-4 h-4 text-gray-500 ${isPending ? 'animate-pulse' : ''}`} />
             <select
                 value={currentYear}
                 onChange={(e) => handleYearChange(e.target.value)}
-                className="text-sm font-medium text-gray-900 bg-transparent border-none focus:ring-0 cursor-pointer"
+                className="text-sm font-medium text-gray-900 bg-transparent border-none focus:ring-0 cursor-pointer disabled:opacity-50"
+                disabled={isPending}
             >
-                <option value={2026}>2026 Intake</option>
-                <option value={2027}>2027 Intake</option>
+                {years.map((y) => (
+                    <option key={y.id} value={y.year}>
+                        {y.year} Intake {hasYears && y.status !== 'ACTIVE' ? `(${y.status})` : ''}
+                    </option>
+                ))}
             </select>
         </div>
     )

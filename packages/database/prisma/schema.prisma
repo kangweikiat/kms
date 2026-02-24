@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -44,15 +45,35 @@ model ParentProfile {
 
 model Student {
   id        String   @id @default(uuid())
-  firstName String
-  lastName  String
+  name      String
   dob       DateTime
   gender    String
+  icNo      String   @unique
+  race      String
   address   String?
 
-  classId String?
-  class   Class?  @relation(fields: [classId], references: [id])
+  // No enrollment details here anymore
 
+  // Personal Info
+  religion    String?
+  nationality String?
+
+  // Parent Info
+  fatherName       String?
+  fatherIc         String?
+  fatherOccupation String?
+  motherName       String?
+  motherIc         String?
+  motherOccupation String?
+
+  // Emergency Info
+  emergencyName    String?
+  emergencyPhone   String?
+  emergencyAddress String?
+
+  enrollments Enrollment[]
+  
+  // existing relations
   parentId String?
   parent   ParentProfile? @relation(fields: [parentId], references: [id])
 
@@ -61,6 +82,51 @@ model Student {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+
+  academicYear    Int
+  enrollmentLevel EnrollmentLevel
+  programType     ProgramType
+  transport       Boolean @default(false)
+  remarks         String?
+  status          EnrollmentStatus @default(ACTIVE)
+
+  classId String?
+  class   Class?  @relation(fields: [classId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, academicYear])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  WITHDRAWN
+}
+
+enum EnrollmentLevel {
+  M2
+  M3
+  M4
+  M5
+  M6
+}
+
+enum ProgramType {
+  HALF_DAY_MORNING
+  HALF_DAY_AFTERNOON
+  MORNING_STAY_BACK
+  AFTERNOON_STAY_BACK
+  FULL_DAY
 }
 
 model Class {
@@ -70,7 +136,7 @@ model Class {
   teacherId   String?
   teacher     TeacherProfile? @relation(fields: [teacherId], references: [id])
 
-  students Student[]
+  enrollments Enrollment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -98,4 +164,20 @@ model Fee {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AcademicYear {
+  id        String             @id @default(uuid())
+  year      Int                @unique
+  status    AcademicYearStatus @default(INACTIVE)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+enum AcademicYearStatus {
+  ACTIVE
+  COMPLETED
+  INACTIVE
 }
