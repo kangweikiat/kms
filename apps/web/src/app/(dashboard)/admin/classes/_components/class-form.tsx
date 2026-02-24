@@ -19,6 +19,7 @@ interface ClassFormProps {
         academicYearId: string
         teacherId: string | null
         isActive: boolean
+        level: string
     }
 }
 

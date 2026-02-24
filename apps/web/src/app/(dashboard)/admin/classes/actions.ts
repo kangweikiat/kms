@@ -7,11 +7,12 @@ export async function createClass(prevState: any, formData: FormData) {
     const name = formData.get('name') as string
     const description = formData.get('description') as string | null
     const capacityStr = formData.get('capacity') as string
+    const level = formData.get('level') as any // EnrollmentLevel
     const buildingId = formData.get('buildingId') as string
     const academicYearId = formData.get('academicYearId') as string
     const teacherId = formData.get('teacherId') as string | null
 
-    if (!name || !capacityStr || !buildingId || !academicYearId) {
+    if (!name || !capacityStr || !level || !buildingId || !academicYearId) {
         return { error: 'Please fill in all required fields.' }
     }
 
@@ -26,6 +27,7 @@ export async function createClass(prevState: any, formData: FormData) {
                 name,
                 description,
                 capacity,
+                level,
                 buildingId,
                 academicYearId,
                 teacherId: teacherId || null
@@ -45,12 +47,13 @@ export async function updateClass(id: string, prevState: any, formData: FormData
     const name = formData.get('name') as string
     const description = formData.get('description') as string | null
     const capacityStr = formData.get('capacity') as string
+    const level = formData.get('level') as any // EnrollmentLevel
     const buildingId = formData.get('buildingId') as string
     const academicYearId = formData.get('academicYearId') as string
     const teacherId = formData.get('teacherId') as string | null
     const isActive = formData.get('isActive') === 'true'
 
-    if (!name || !capacityStr || !buildingId || !academicYearId) {
+    if (!name || !capacityStr || !level || !buildingId || !academicYearId) {
         return { error: 'Please fill in all required fields.' }
     }
 
@@ -66,6 +69,7 @@ export async function updateClass(id: string, prevState: any, formData: FormData
                 name,
                 description,
                 capacity,
+                level,
                 buildingId,
                 academicYearId,
                 teacherId: teacherId || null,

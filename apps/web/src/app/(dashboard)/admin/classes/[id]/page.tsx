@@ -39,6 +39,7 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
     const unassignedEnrollments = await prisma.enrollment.findMany({
         where: {
             academicYear: classData.academicYear.year,
+            enrollmentLevel: classData.level as any, // Cast to any to avoid Prisma strict type checking issues if not completely rebuilt in memory yet
             status: 'ACTIVE',
             classId: null
         },
@@ -63,7 +64,7 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
                     <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">{classData.name} ({classData.academicYear.year})</h1>
+                    <h1 className="text-2xl font-bold text-gray-800">{classData.name} ({classData.academicYear.year} • {classData.level})</h1>
                     <p className="text-sm text-gray-500">Manage students assigned to this class.</p>
                 </div>
             </div>
@@ -86,6 +87,12 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
                                 <dd className="mt-1 font-semibold text-gray-900">
                                     {classData.teacher?.user.name ? classData.teacher.user.name : <span className="text-gray-400">Not Assigned</span>}
                                 </dd>
+                            </div>
+                            <div>
+                                <dt className="text-gray-500 font-medium flex items-center gap-2">
+                                    <Users className="w-4 h-4" /> Level
+                                </dt>
+                                <dd className="mt-1 font-semibold text-gray-900">{classData.level}</dd>
                             </div>
                             <div>
                                 <dt className="text-gray-500 font-medium flex items-center gap-2">

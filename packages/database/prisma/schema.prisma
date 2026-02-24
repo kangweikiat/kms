@@ -145,6 +145,7 @@ model Class {
   name        String
   description String?
   capacity    Int
+  level       EnrollmentLevel @default(M2)
   isActive    Boolean  @default(true)
 
   academicYearId String

@@ -70,6 +70,7 @@ export default async function ClassesPage(props: {
                         <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                             <tr>
                                 <th scope="col" className="px-6 py-3">Class Name</th>
+                                <th scope="col" className="px-6 py-3">Level</th>
                                 <th scope="col" className="px-6 py-3">Building</th>
                                 <th scope="col" className="px-6 py-3 text-center">Capacity</th>
                                 <th scope="col" className="px-6 py-3 text-center">Status</th>
@@ -86,6 +87,9 @@ export default async function ClassesPage(props: {
                                             <div className="flex items-center gap-3">
                                                 <span>{cls.name}</span>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-600">
+                                            {cls.level}
                                         </td>
                                         <td className="px-6 py-4">
                                             {cls.building.name}
