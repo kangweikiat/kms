@@ -44,48 +44,27 @@ export function BuildingActions({ id, isActive }: BuildingActionsProps) {
     }
 
     return (
-        <div className="relative">
+        <div className="flex items-center gap-2">
             <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                onClick={handleToggleStatus}
                 disabled={isPending}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition disabled:opacity-50"
+                title={isActive ? 'Deactivate Building' : 'Activate Building'}
             >
-                <MoreVertical className="w-4 h-4" />
+                {isActive ? (
+                    <PowerOff className="w-4 h-4 text-orange-500" />
+                ) : (
+                    <Power className="w-4 h-4 text-green-500" />
+                )}
             </button>
-
-            {isMenuOpen && (
-                <>
-                    <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setIsMenuOpen(false)}
-                    />
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
-                        <button
-                            onClick={handleToggleStatus}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
-                        >
-                            {isActive ? (
-                                <>
-                                    <PowerOff className="w-4 h-4 text-orange-500" />
-                                    Deactivate
-                                </>
-                            ) : (
-                                <>
-                                    <Power className="w-4 h-4 text-green-500" />
-                                    Activate
-                                </>
-                            )}
-                        </button>
-                        <button
-                            onClick={() => setIsDeleteDialogOpen(true)}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                            Delete
-                        </button>
-                    </div>
-                </>
-            )}
+            <button
+                onClick={() => setIsDeleteDialogOpen(true)}
+                disabled={isPending}
+                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
+                title="Delete Building"
+            >
+                <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+            </button>
 
             <ConfirmDialog
                 isOpen={isDeleteDialogOpen}
