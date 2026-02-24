@@ -73,6 +73,24 @@ export function ClassForm({ buildings, academicYears, teachers, initialData }: C
                 </div>
 
                 <div className="space-y-2">
+                    <label htmlFor="level" className="text-sm font-medium text-gray-700">Level <span className="text-red-500">*</span></label>
+                    <select
+                        name="level"
+                        id="level"
+                        required
+                        defaultValue={initialData?.level || ''}
+                        className="w-full px-3 py-2 border bg-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    >
+                        <option value="" disabled>Select Level</option>
+                        <option value="M2">M2 (2 Years Old)</option>
+                        <option value="M3">M3 (3 Years Old)</option>
+                        <option value="M4">M4 (4 Years Old)</option>
+                        <option value="M5">M5 (5 Years Old)</option>
+                        <option value="M6">M6 (6 Years Old)</option>
+                    </select>
+                </div>
+
+                <div className="space-y-2">
                     <label htmlFor="academicYearId" className="text-sm font-medium text-gray-700">Academic Year <span className="text-red-500">*</span></label>
                     <select
                         name="academicYearId"
