@@ -6,14 +6,18 @@ import { hardDeleteStudent } from '../actions'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
+import { useRouter } from 'next/navigation'
+
 interface HardDeleteButtonProps {
     id: string
     year: number
+    redirectTo?: string
 }
 
-export function HardDeleteButton({ id, year }: HardDeleteButtonProps) {
+export function HardDeleteButton({ id, year, redirectTo }: HardDeleteButtonProps) {
     const [isPending, startTransition] = useTransition()
     const [isOpen, setIsOpen] = useState(false)
+    const router = useRouter()
 
     const handleDelete = async () => {
         startTransition(async () => {
@@ -21,6 +25,9 @@ export function HardDeleteButton({ id, year }: HardDeleteButtonProps) {
             if (result.success) {
                 toast.success('Student record permanently deleted')
                 setIsOpen(false)
+                if (redirectTo) {
+                    router.push(redirectTo)
+                }
             } else {
                 toast.error(result.message)
             }

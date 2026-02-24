@@ -62,13 +62,9 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                     Student Information
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">First Name <span className="text-red-500">*</span></label>
-                        <input name="firstName" required type="text" defaultValue={student?.firstName} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. John" />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Last Name <span className="text-red-500">*</span></label>
-                        <input name="lastName" required type="text" defaultValue={student?.lastName} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Doe" />
+                    <div className="col-span-1 md:col-span-2 space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Name <span className="text-red-500">*</span></label>
+                        <input name="name" required type="text" defaultValue={student?.name} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. John Doe" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">IC / MyKid <span className="text-red-500">*</span></label>

@@ -28,8 +28,7 @@ function extractStudentData(formData: FormData) {
     }
 
     return {
-        firstName: formData.get('firstName') as string,
-        lastName: formData.get('lastName') as string,
+        name: formData.get('name') as string,
         icNo: formData.get('icNo') as string,
         dob: new Date(formData.get('dob') as string),
         gender: formData.get('gender') as string,
@@ -255,8 +254,6 @@ export async function enrollStudent(studentId: string, prevState: any, formData:
                 studentId
             }
         })
-        revalidatePath(`/admin/students/${studentId}`)
-        return { success: true }
     } catch (error) {
         console.error('Failed to enroll student:', error)
         // Check for unique constraint violation as a fallback
@@ -265,4 +262,7 @@ export async function enrollStudent(studentId: string, prevState: any, formData:
         }
         return { error: 'Failed to create enrollment. Please try again.' }
     }
+
+    revalidatePath(`/admin/students/${studentId}`)
+    redirect(`/admin/students/${studentId}`)
 }

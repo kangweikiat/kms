@@ -29,7 +29,7 @@ export default async function EnrollStudentPage(props: PageProps) {
             <div className="flex items-center gap-4 text-gray-500 text-sm">
                 <Link href="/admin/students" className="hover:text-gray-900 transition">Students</Link>
                 <span>/</span>
-                <Link href={`/admin/students/${id}`} className="hover:text-gray-900 transition">{student.firstName} {student.lastName}</Link>
+                <Link href={`/admin/students/${id}`} className="hover:text-gray-900 transition">{student.name}</Link>
                 <span>/</span>
                 <span className="text-gray-900 font-medium">New Enrollment</span>
             </div>
@@ -46,7 +46,7 @@ export default async function EnrollStudentPage(props: PageProps) {
 
             <EnrollmentForm
                 studentId={student.id}
-                studentName={`${student.firstName} ${student.lastName}`}
+                studentName={student.name}
                 availableYears={academicYears}
             />
         </div>

@@ -60,7 +60,7 @@ export default async function StudentDetailsPage({
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">{student.firstName} {student.lastName}</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">{student.name}</h1>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                             <span>Student ID: {student.id}</span>
                             {!isEnrolledActive && <span className="text-red-500 font-medium">({enrollmentForYear?.status || 'Inactive'})</span>}
@@ -83,7 +83,7 @@ export default async function StudentDetailsPage({
                         <>
                             <ReactivateButton id={student.id} year={currentYear} />
                             {enrollmentForYear?.status === 'WITHDRAWN' && (
-                                <HardDeleteButton id={student.id} year={currentYear} />
+                                <HardDeleteButton id={student.id} year={currentYear} redirectTo="/admin/students" />
                             )}
                         </>
                     )}
