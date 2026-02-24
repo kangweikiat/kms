@@ -11,9 +11,10 @@ type AvailableStudent = {
     student: {
         id: string
         name: string
+        gender: string
+        race: string
+        createdAt: Date
     }
-    programType: string
-    enrollmentLevel: string
 }
 
 interface AssignStudentModalProps {
@@ -94,9 +95,20 @@ export function AssignStudentModal({ classId, availableStudents, isFull }: Assig
                                         >
                                             <div>
                                                 <p className="font-semibold text-gray-900">{enrollment.student.name}</p>
-                                                <p className="text-xs text-gray-500 mt-0.5">
-                                                    {enrollment.programType.replace(/_/g, ' ')} • {enrollment.enrollmentLevel}
-                                                </p>
+                                                <div className="mt-1 flex items-center gap-2">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800">
+                                                        {enrollment.student.gender}
+                                                    </span>
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800" title={enrollment.student.race}>
+                                                        {enrollment.student.race === 'Malay' ? 'M' : enrollment.student.race === 'Chinese' ? 'C' : enrollment.student.race === 'Indian' ? 'I' : 'O'}
+                                                    </span>
+                                                    <span
+                                                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${new Date(enrollment.student.createdAt).getFullYear() === new Date().getFullYear() ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}
+                                                        title={new Date(enrollment.student.createdAt).getFullYear() === new Date().getFullYear() ? 'New Student' : 'Old Student'}
+                                                    >
+                                                        {new Date(enrollment.student.createdAt).getFullYear() === new Date().getFullYear() ? 'N' : 'O'}
+                                                    </span>
+                                                </div>
                                             </div>
                                             <button
                                                 onClick={() => handleAssign(enrollment.id)}
