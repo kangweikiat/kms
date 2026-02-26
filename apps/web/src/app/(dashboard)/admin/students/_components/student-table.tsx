@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Eye, Pencil, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react'
 import { ProgramBadge } from './program-badge'
 import { DeleteButton } from './delete-button'
@@ -32,28 +33,51 @@ type StudentWithEnrollment = BaseStudent & {
 }
 
 interface StudentTableProps {
-    students: StudentWithEnrollment[]
+    students: (BaseStudent & {
+        enrollments: (BaseEnrollment & { class: { id: string, name: string } | null })[]
+    })[]
     year: number
+    currentPage?: number
+    totalPages?: number
+    totalItems?: number
 }
 
 type SortColumn = 'name' | 'level' | 'program' | 'status' | 'class'
 type SortDirection = 'asc' | 'desc' | null
 
-export function StudentTable({ students, year }: StudentTableProps) {
+export function StudentTable({ students, year, currentPage = 1, totalPages = 1, totalItems = 0 }: StudentTableProps) {
+    const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
     const [sortColumn, setSortColumn] = useState<SortColumn | null>(null)
     const [sortDirection, setSortDirection] = useState<SortDirection>(null)
 
     const handleSort = (column: SortColumn) => {
+        let newSortDirection: SortDirection = 'asc'
         if (sortColumn === column) {
-            if (sortDirection === 'asc') setSortDirection('desc')
+            if (sortDirection === 'asc') newSortDirection = 'desc'
             else if (sortDirection === 'desc') {
-                setSortDirection(null)
+                newSortDirection = null
                 setSortColumn(null)
             }
         } else {
             setSortColumn(column)
-            setSortDirection('asc')
+            newSortDirection = 'asc'
         }
+        setSortDirection(newSortDirection)
+
+        const params = new URLSearchParams(searchParams.toString())
+        if (newSortDirection) {
+            params.set('sortColumn', column)
+            params.set('sortDirection', newSortDirection)
+        } else {
+            params.delete('sortColumn')
+            params.delete('sortDirection')
+        }
+        // Reset page to 1 when sorting
+        params.set('page', '1')
+
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false })
     }
 
     const sortedStudents = useMemo(() => {
@@ -95,6 +119,12 @@ export function StudentTable({ students, year }: StudentTableProps) {
             return 0
         })
     }, [students, sortColumn, sortDirection])
+
+    const handlePageChange = (newPage: number) => {
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('page', newPage.toString())
+        router.replace(`${pathname}?${params.toString()}`)
+    }
 
     const SortIcon = ({ column }: { column: SortColumn }) => {
         if (sortColumn !== column || !sortDirection) {
@@ -164,7 +194,7 @@ export function StudentTable({ students, year }: StudentTableProps) {
                     <tbody className="divide-y divide-gray-100">
                         {sortedStudents.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={7} className="px-6 py-12 text-center text-gray-500 bg-white">
                                     No students found matching your criteria.
                                 </td>
                             </tr>
@@ -253,6 +283,31 @@ export function StudentTable({ students, year }: StudentTableProps) {
                     </tbody>
                 </table>
             </div>
-        </div >
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-sm text-gray-500">
+                        Showing <span className="font-medium">{(currentPage - 1) * 20 + 1}</span> to <span className="font-medium">{Math.min(currentPage * 20, totalItems || 0)}</span> of <span className="font-medium">{totalItems}</span> students
+                    </p>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
     )
 }

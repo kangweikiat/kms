@@ -9,13 +9,17 @@ import { StudentTable } from './_components/student-table'
 import { cookies } from 'next/headers'
 
 export default async function StudentsPage(props: {
-    searchParams: Promise<{ view?: string; q?: string; year?: string }>
+    searchParams: Promise<{ view?: string; q?: string; year?: string; page?: string }>
 }) {
     const searchParams = await props.searchParams
     const cookieStore = await cookies()
     const view = searchParams.view || 'active'
     const query = searchParams.q || ''
     const year = Number(searchParams.year) || Number(cookieStore.get('admin_year')?.value) || 2026
+
+    // Pagination defaults
+    const currentPage = Number(searchParams.page) || 1
+    const itemsPerPage = 20
 
 
     // Filter by active status AND search query AND academic year
@@ -59,20 +63,26 @@ export default async function StudentsPage(props: {
         ]
     }
 
-    const students = await prisma.student.findMany({
-        where,
-        include: {
-            enrollments: {
-                where: { academicYear: year },
-                take: 1,
-                include: {
-                    class: true
+    const [students, totalStudents] = await Promise.all([
+        prisma.student.findMany({
+            where,
+            include: {
+                enrollments: {
+                    where: { academicYear: year },
+                    take: 1,
+                    include: {
+                        class: true
+                    }
                 }
-            }
-        },
-        orderBy: { createdAt: 'desc' },
-        // Removed take: 20 to allow frontend sorting across all matching students
-    })
+            },
+            orderBy: { createdAt: 'desc' },
+            skip: (currentPage - 1) * itemsPerPage,
+            take: itemsPerPage,
+        }),
+        prisma.student.count({ where })
+    ])
+
+    const totalPages = Math.ceil(totalStudents / itemsPerPage)
 
     return (
         <div className="max-w-7xl mx-auto space-y-8">
@@ -93,7 +103,13 @@ export default async function StudentsPage(props: {
                 </div>
             </div>
 
-            <StudentTable students={students} year={year} />
+            <StudentTable
+                students={students}
+                year={year}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalStudents}
+            />
         </div>
     )
 }
