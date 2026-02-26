@@ -96,7 +96,7 @@ export function PackageForm({ academicYears, feeItems, initialData }: PackageFor
             setError(result.error)
             setIsPending(false)
         } else {
-            router.push('/admin/fee-packages')
+            router.push('/admin/settings/fee-packages')
         }
     }
 
@@ -300,7 +300,7 @@ export function PackageForm({ academicYears, feeItems, initialData }: PackageFor
 
             <div className="flex items-center justify-end gap-3 pt-2">
                 <Link
-                    href="/admin/fee-packages"
+                    href="/admin/settings/fee-packages"
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:ring-gray-100"
                 >
                     Cancel

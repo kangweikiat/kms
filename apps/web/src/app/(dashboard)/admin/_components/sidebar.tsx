@@ -20,8 +20,6 @@ const navigation = [
     { name: 'Classes', href: '/admin/classes', icon: GraduationCap },
     { name: 'Teachers', href: '/admin/teachers', icon: Briefcase },
     { name: 'Payments', href: '/admin/payments', icon: CreditCard },
-    { name: 'Fee Items', href: '/admin/fee-items', icon: FileText },
-    { name: 'Fee Packages', href: '/admin/fee-packages', icon: CreditCard },
     { name: 'Reports', href: '/admin/reports', icon: FileText },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
 ]

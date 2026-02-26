@@ -22,7 +22,7 @@ export default async function FeeItemsPage() {
                 </div>
                 <div className="flex items-center gap-4">
                     <Link
-                        href="/admin/fee-items/new"
+                        href="/admin/settings/fee-items/new"
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
                     >
                         <Plus className="w-4 h-4" />
@@ -75,7 +75,7 @@ export default async function FeeItemsPage() {
                                 <td className="px-6 py-4 text-right whitespace-nowrap">
                                     <div className="flex items-center justify-end gap-2">
                                         <Link
-                                            href={`/admin/fee-items/${item.id}/edit`}
+                                            href={`/admin/settings/fee-items/${item.id}/edit`}
                                             className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition"
                                             title="Edit Fee Item"
                                         >

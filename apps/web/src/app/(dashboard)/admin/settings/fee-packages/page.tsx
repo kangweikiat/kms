@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { Plus, Pencil } from 'lucide-react'
 import { PackageActions } from './_components/package-actions'
-import { LevelFilter } from '../classes/_components/level-filter'
+import { LevelFilter } from '../../classes/_components/level-filter'
 import { BillingPeriodFilter } from './_components/billing-period-filter'
-import { LevelBadge } from '../students/_components/level-badge'
+import { LevelBadge } from '../../students/_components/level-badge'
 
 export default async function FeePackagesPage(props: {
     searchParams: Promise<{ year?: string; level?: string; period?: string }>
@@ -54,7 +54,7 @@ export default async function FeePackagesPage(props: {
                     <LevelFilter currentLevel={levelFilter} />
                     <BillingPeriodFilter currentPeriod={periodFilter} />
                     <Link
-                        href="/admin/fee-packages/new"
+                        href="/admin/settings/fee-packages/new"
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
                     >
                         <Plus className="w-4 h-4" />
@@ -121,7 +121,7 @@ export default async function FeePackagesPage(props: {
                                         <td className="px-6 py-4 text-right whitespace-nowrap">
                                             <div className="flex items-center justify-end gap-2">
                                                 <Link
-                                                    href={`/admin/fee-packages/${pkg.id}/edit`}
+                                                    href={`/admin/settings/fee-packages/${pkg.id}/edit`}
                                                     className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition"
                                                     title="Edit Package"
                                                 >

@@ -23,7 +23,7 @@ export default async function NewPackagePage() {
         <div className="space-y-6 max-w-5xl mx-auto">
             <div className="flex items-center gap-4">
                 <Link
-                    href="/admin/fee-packages"
+                    href="/admin/settings/fee-packages"
                     className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-900 transition"
                 >
                     <ArrowLeft className="w-5 h-5" />

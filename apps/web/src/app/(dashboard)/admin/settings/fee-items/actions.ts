@@ -28,7 +28,7 @@ export async function createFeeItem(prevState: any, formData: FormData) {
                 isActive: true
             }
         })
-        revalidatePath('/admin/fee-items')
+        revalidatePath('/admin/settings/fee-items')
         return { success: true }
     } catch (error: any) {
         if (error.code === 'P2002') {
@@ -65,7 +65,7 @@ export async function updateFeeItem(id: string, prevState: any, formData: FormDa
                 isActive
             }
         })
-        revalidatePath('/admin/fee-items')
+        revalidatePath('/admin/settings/fee-items')
         return { success: true }
     } catch (error: any) {
         if (error.code === 'P2002') {
@@ -97,7 +97,7 @@ export async function deleteFeeItem(id: string) {
         await prisma.feeItem.delete({
             where: { id }
         });
-        revalidatePath('/admin/fee-items')
+        revalidatePath('/admin/settings/fee-items')
         return { success: true }
     } catch (error) {
         return { error: 'Failed to delete fee item.' }

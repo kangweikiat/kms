@@ -42,7 +42,7 @@ export async function createFeePackage(
                 }
             }
         })
-        revalidatePath('/admin/fee-packages')
+        revalidatePath('/admin/settings/fee-packages')
         return { success: true }
     } catch (error: any) {
         if (error.code === 'P2002') {
@@ -95,7 +95,7 @@ export async function updateFeePackage(
                 }
             })
         })
-        revalidatePath('/admin/fee-packages')
+        revalidatePath('/admin/settings/fee-packages')
         return { success: true }
     } catch (error: any) {
         if (error.code === 'P2002') {
@@ -111,7 +111,7 @@ export async function deleteFeePackage(id: string) {
         await prisma.feePackage.delete({
             where: { id }
         })
-        revalidatePath('/admin/fee-packages')
+        revalidatePath('/admin/settings/fee-packages')
         return { success: true }
     } catch (error) {
         return { error: 'Failed to delete fee package.' }
