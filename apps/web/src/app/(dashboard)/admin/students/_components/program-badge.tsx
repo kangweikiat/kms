@@ -25,15 +25,15 @@ export function ProgramBadge({ type }: ProgramBadgeProps) {
     const getLabel = (type: string) => {
         switch (type) {
             case 'FULL_DAY':
-                return '8:00 am to 5:30 pm'
+                return 'Full Day'
             case 'HALF_DAY_MORNING':
-                return '8am to 12pm'
+                return 'Half Day (Morning)'
             case 'HALF_DAY_AFTERNOON':
-                return '12:30 pm to 4:30 pm'
+                return 'Half Day (Afternoon)'
             case 'MORNING_STAY_BACK':
-                return '8am to 2pm'
+                return 'Morning + Stay Back'
             case 'AFTERNOON_STAY_BACK':
-                return 'Afternoon + Stay Back' // Legacy/Unused
+                return 'Afternoon + Stay Back'
             default:
                 return type.replace(/_/g, ' ')
         }
