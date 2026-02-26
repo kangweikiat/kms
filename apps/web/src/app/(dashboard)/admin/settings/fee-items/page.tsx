@@ -37,6 +37,7 @@ export default async function FeeItemsPage() {
                         <tr>
                             <th scope="col" className="px-6 py-4 font-semibold">Name</th>
                             <th scope="col" className="px-6 py-4 font-semibold">Code</th>
+                            <th scope="col" className="px-6 py-4 font-semibold">Type</th>
                             <th scope="col" className="px-6 py-4 font-semibold text-right">Default Amount</th>
                             <th scope="col" className="px-6 py-4 font-semibold text-center">Status</th>
                             <th scope="col" className="px-6 py-4 font-semibold text-center">Used In Packages</th>
@@ -55,6 +56,11 @@ export default async function FeeItemsPage() {
                                 <td className="px-6 py-4">
                                     <span className="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
                                         {item.code}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.chargeType === 'MONTHLY' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
+                                        {item.chargeType === 'MONTHLY' ? 'Monthly' : 'One-Time'}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-right font-medium text-gray-900">

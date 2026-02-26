@@ -8,8 +8,9 @@ export async function createFeeItem(prevState: any, formData: FormData) {
     const code = formData.get('code') as string
     const defaultAmountStr = formData.get('defaultAmount') as string
     const description = formData.get('description') as string | null
+    const chargeType = formData.get('chargeType') as any
 
-    if (!name || !code || !defaultAmountStr) {
+    if (!name || !code || !defaultAmountStr || !chargeType) {
         return { error: 'Please fill in all required fields.' }
     }
 
@@ -24,6 +25,7 @@ export async function createFeeItem(prevState: any, formData: FormData) {
                 name,
                 code,
                 defaultAmount,
+                chargeType,
                 description,
                 isActive: true
             }
@@ -43,9 +45,10 @@ export async function updateFeeItem(id: string, prevState: any, formData: FormDa
     const code = formData.get('code') as string
     const defaultAmountStr = formData.get('defaultAmount') as string
     const description = formData.get('description') as string | null
+    const chargeType = formData.get('chargeType') as any
     const isActive = formData.get('isActive') === 'true'
 
-    if (!name || !code || !defaultAmountStr) {
+    if (!name || !code || !defaultAmountStr || !chargeType) {
         return { error: 'Please fill in all required fields.' }
     }
 

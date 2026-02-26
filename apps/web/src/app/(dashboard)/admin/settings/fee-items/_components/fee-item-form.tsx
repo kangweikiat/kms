@@ -12,6 +12,7 @@ interface FeeItemFormProps {
         name: string
         code: string
         defaultAmount: number
+        chargeType: any
         description: string | null
         isActive: boolean
     }
@@ -66,7 +67,21 @@ export function FeeItemForm({ initialData }: FeeItemFormProps) {
                     />
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2">
+                    <label htmlFor="chargeType" className="text-sm font-medium text-gray-700">Charge Type <span className="text-red-500">*</span></label>
+                    <select
+                        name="chargeType"
+                        id="chargeType"
+                        required
+                        defaultValue={initialData?.chargeType || 'ONE_TIME'}
+                        className="w-full px-3 py-2 border bg-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    >
+                        <option value="ONE_TIME">One-Time Fee</option>
+                        <option value="MONTHLY">Monthly Recurring</option>
+                    </select>
+                </div>
+
+                <div className="space-y-2">
                     <label htmlFor="defaultAmount" className="text-sm font-medium text-gray-700">Default Amount (RM) <span className="text-red-500">*</span></label>
                     <input
                         type="number"

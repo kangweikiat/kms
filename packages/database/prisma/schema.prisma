@@ -214,11 +214,17 @@ enum BillingPeriod {
   SECOND_HALF_YEAR
 }
 
+enum ChargeType {
+  ONE_TIME
+  MONTHLY
+}
+
 model FeeItem {
   id            String           @id @default(uuid())
   name          String
   code          String           @unique
   defaultAmount Float
+  chargeType    ChargeType       @default(ONE_TIME)
   description   String?
   isActive      Boolean          @default(true)
   createdAt     DateTime         @default(now())
