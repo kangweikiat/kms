@@ -94,11 +94,43 @@ export async function updateFeePackage(
                 where: { feePackageId: id }
             })
 
+            // Safely manage collection rule to avoid "Record to delete does not exist"
+            if (!data.collectionRuleUpfrontMonths || data.collectionRuleUpfrontMonths <= 0) {
+                // Remove any existing rule if toggle is off
+                await tx.collectionRule.deleteMany({
+                    where: { feePackageId: id }
+                })
+            }
+
+            const ruleData = data.collectionRuleUpfrontMonths && data.collectionRuleUpfrontMonths > 0
+                ? {
+                    collectionRule: {
+                        upsert: {
+                            create: {
+                                upfrontMonths: data.collectionRuleUpfrontMonths,
+                                description: data.collectionRuleDescription,
+                                isActive: true
+                            },
+                            update: {
+                                upfrontMonths: data.collectionRuleUpfrontMonths,
+                                description: data.collectionRuleDescription,
+                                isActive: true
+                            }
+                        }
+                    }
+                }
+                : {}
+
             // Update package and create new items
             await tx.feePackage.update({
                 where: { id },
                 data: {
-                    ...data,
+                    name: data.name,
+                    level: data.level,
+                    academicYearId: data.academicYearId,
+                    billingPeriod: data.billingPeriod,
+                    description: data.description,
+                    isActive: data.isActive,
                     feePackageItems: {
                         create: items.map((item, index) => ({
                             feeItemId: item.feeItemId,
@@ -107,28 +139,7 @@ export async function updateFeePackage(
                             sortOrder: index
                         }))
                     },
-                    ...(data.collectionRuleUpfrontMonths && data.collectionRuleUpfrontMonths > 0
-                        ? {
-                            collectionRule: {
-                                upsert: {
-                                    create: {
-                                        upfrontMonths: data.collectionRuleUpfrontMonths,
-                                        description: data.collectionRuleDescription,
-                                        isActive: true
-                                    },
-                                    update: {
-                                        upfrontMonths: data.collectionRuleUpfrontMonths,
-                                        description: data.collectionRuleDescription,
-                                        isActive: true
-                                    }
-                                }
-                            }
-                        }
-                        : {
-                            collectionRule: {
-                                delete: true
-                            }
-                        })
+                    ...ruleData
                 }
             })
         })
