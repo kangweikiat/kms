@@ -2,18 +2,20 @@ import { prisma } from '@kms/database'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { BuildingFilter } from './_components/building-filter'
+import { LevelFilter } from './_components/level-filter'
 import { Building, Users, Search, Plus, ArrowLeft, Pencil } from 'lucide-react'
 import { ClassBadge } from './_components/class-badge'
 import { LevelBadge } from '../students/_components/level-badge'
 import { ClassActions } from './_components/class-actions'
 
 export default async function ClassesPage(props: {
-    searchParams: Promise<{ year?: string; building?: string }>
+    searchParams: Promise<{ year?: string; building?: string; level?: string }>
 }) {
     const searchParams = await props.searchParams
     const cookieStore = await cookies()
     const yearInt = Number(searchParams.year) || Number(cookieStore.get('admin_year')?.value) || 2026
     const buildingFilterId = searchParams.building
+    const levelFilter = searchParams.level as any
 
     const academicYear = await prisma.academicYear.findUnique({
         where: { year: yearInt }
@@ -27,7 +29,8 @@ export default async function ClassesPage(props: {
     const classes = academicYear ? await prisma.class.findMany({
         where: {
             academicYearId: academicYear.id,
-            ...(buildingFilterId ? { buildingId: buildingFilterId } : {})
+            ...(buildingFilterId ? { buildingId: buildingFilterId } : {}),
+            ...(levelFilter ? { level: levelFilter } : {})
         },
         include: {
             building: true,
@@ -49,6 +52,7 @@ export default async function ClassesPage(props: {
                     <p className="text-sm text-gray-500">Manage classes for {yearInt} Intake</p>
                 </div>
                 <div className="flex items-center gap-4">
+                    <LevelFilter currentLevel={levelFilter} />
                     <BuildingFilter buildings={buildings} currentBuilding={buildingFilterId} />
                     <Link
                         href="/admin/classes/new"
