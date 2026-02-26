@@ -9,6 +9,7 @@ import { DeleteButton } from './delete-button'
 import { ReactivateButton } from './reactivate-button'
 import { HardDeleteButton } from './hard-delete-button'
 import { ClassBadge } from '../../classes/_components/class-badge'
+import { LevelBadge } from './level-badge'
 
 // Define the needed types
 type BaseStudent = {
@@ -211,7 +212,9 @@ export function StudentTable({ students, year, currentPage = 1, totalPages = 1, 
                                             </div>
                                             <div className="text-xs text-gray-500">{student.icNo}</div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">{activeEnrollment?.enrollmentLevel || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">
+                                            {activeEnrollment ? <LevelBadge level={activeEnrollment.enrollmentLevel} /> : '-'}
+                                        </td>
                                         <td className="px-6 py-4 text-sm text-gray-600">
                                             {// @ts-ignore
                                                 activeEnrollment ? <ProgramBadge type={activeEnrollment.programType} /> : '-'}

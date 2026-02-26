@@ -5,6 +5,8 @@ import { ArrowLeft, Users, Building, ShieldCheck, Mail, Phone } from 'lucide-rea
 import { AssignStudentModal } from './_components/assign-student-modal'
 import { RemoveStudentButton } from './_components/remove-student-button'
 import { ClassActions } from '../_components/class-actions'
+import { ClassBadge } from '../_components/class-badge'
+import { LevelBadge } from '../../students/_components/level-badge'
 import { ProgramBadge } from '../../students/_components/program-badge'
 export default async function ClassDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -65,8 +67,11 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
                     <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">{classData.name} ({classData.academicYear.year} • {classData.level})</h1>
-                    <p className="text-sm text-gray-500">Manage students assigned to this class.</p>
+                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                        <ClassBadge classData={classData} className="text-2xl py-1 px-4" />
+                        ({classData.academicYear.year})
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-1">Manage students assigned to this class.</p>
                 </div>
             </div>
 
@@ -93,7 +98,9 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
                                 <dt className="text-gray-500 font-medium flex items-center gap-2">
                                     <Users className="w-4 h-4" /> Level
                                 </dt>
-                                <dd className="mt-1 font-semibold text-gray-900">{classData.level}</dd>
+                                <dd className="mt-1 font-semibold text-gray-900">
+                                    <LevelBadge level={classData.level} />
+                                </dd>
                             </div>
                             <div>
                                 <dt className="text-gray-500 font-medium flex items-center gap-2">

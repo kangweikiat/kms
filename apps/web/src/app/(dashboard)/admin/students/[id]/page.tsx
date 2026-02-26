@@ -7,6 +7,7 @@ import { ProgramBadge } from '../_components/program-badge'
 import { DeleteButton } from '../_components/delete-button'
 import { ReactivateButton } from '../_components/reactivate-button'
 import { HardDeleteButton } from '../_components/hard-delete-button'
+import { LevelBadge } from '../_components/level-badge'
 
 export default async function StudentDetailsPage({
     params,
@@ -153,7 +154,7 @@ export default async function StudentDetailsPage({
                                         <div>
                                             <div className="font-bold text-gray-900 text-base">{enrollment.academicYear}</div>
                                             <div className="text-sm text-gray-600 mt-0.5">
-                                                Level {enrollment.enrollmentLevel}
+                                                {/* Level {enrollment.enrollmentLevel} */}
                                             </div>
                                         </div>
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${enrollment.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
@@ -172,6 +173,10 @@ export default async function StudentDetailsPage({
                                         <div className="flex justify-between text-sm">
                                             <span className="text-gray-500">Class</span>
                                             <span className="font-medium text-gray-900">{enrollment.class ? enrollment.class.name : 'Unassigned'}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-500">Level</span>
+                                            <LevelBadge level={enrollment.enrollmentLevel} />
                                         </div>
                                         <div className="flex justify-between text-sm">
                                             <span className="text-gray-500">Transport</span>

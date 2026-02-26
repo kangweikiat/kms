@@ -1,9 +1,10 @@
 import { prisma } from '@kms/database'
 import Link from 'next/link'
-import { Plus, Pencil, Users } from 'lucide-react'
 import { cookies } from 'next/headers'
 import { BuildingFilter } from './_components/building-filter'
+import { Building, Users, Search, Plus, ArrowLeft, Pencil } from 'lucide-react'
 import { ClassBadge } from './_components/class-badge'
+import { LevelBadge } from '../students/_components/level-badge'
 import { ClassActions } from './_components/class-actions'
 
 export default async function ClassesPage(props: {
@@ -90,7 +91,7 @@ export default async function ClassesPage(props: {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-gray-600">
-                                            {cls.level}
+                                            <LevelBadge level={cls.level} />
                                         </td>
                                         <td className="px-6 py-4">
                                             {cls.building.name}
