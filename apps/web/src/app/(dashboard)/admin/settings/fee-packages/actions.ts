@@ -58,8 +58,9 @@ export async function createFeePackage(
         revalidatePath('/admin/settings/fee-packages')
         return { success: true }
     } catch (error: any) {
+        console.error("Error creating fee package:", error)
         if (error.code === 'P2002') {
-            return { error: 'A Fee Package for this level and billing period already exists in the selected academic year.' }
+            return { error: 'A Fee Package for this level, program type, and billing period already exists in the selected academic year.' }
         }
         return { error: 'Failed to create fee package.' }
     }
@@ -70,6 +71,7 @@ export async function updateFeePackage(
     data: {
         name: string
         level: any
+        programType: any
         academicYearId: string
         billingPeriod: any
         description?: string
@@ -79,7 +81,7 @@ export async function updateFeePackage(
     },
     items: FeePackageItemInput[]
 ) {
-    if (!data.name || !data.level || !data.academicYearId || !data.billingPeriod) {
+    if (!data.name || !data.level || !data.programType || !data.academicYearId || !data.billingPeriod) {
         return { error: 'Please fill in all required package fields.' }
     }
 
@@ -127,6 +129,7 @@ export async function updateFeePackage(
                 data: {
                     name: data.name,
                     level: data.level,
+                    programType: data.programType,
                     academicYearId: data.academicYearId,
                     billingPeriod: data.billingPeriod,
                     description: data.description,
@@ -147,7 +150,7 @@ export async function updateFeePackage(
         return { success: true }
     } catch (error: any) {
         if (error.code === 'P2002') {
-            return { error: 'A Fee Package for this level and billing period already exists in the selected academic year.' }
+            return { error: 'A Fee Package for this level, program type, and billing period already exists in the selected academic year.' }
         }
         return { error: 'Failed to update fee package.' }
     }

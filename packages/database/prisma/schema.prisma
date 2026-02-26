@@ -237,6 +237,7 @@ model FeePackage {
   id             String          @id @default(uuid())
   name           String
   level          EnrollmentLevel
+  programType    ProgramType     @default(HALF_DAY_MORNING)
   academicYearId String
   academicYear   AcademicYear    @relation(fields: [academicYearId], references: [id])
   billingPeriod  BillingPeriod
@@ -248,7 +249,7 @@ model FeePackage {
   feePackageItems FeePackageItem[]
   collectionRule  CollectionRule?
 
-  @@unique([academicYearId, level, billingPeriod])
+  @@unique([academicYearId, level, programType, billingPeriod])
 }
 
 model FeePackageItem {

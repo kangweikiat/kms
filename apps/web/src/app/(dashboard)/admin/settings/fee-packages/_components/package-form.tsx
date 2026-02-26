@@ -5,7 +5,7 @@ import { createFeePackage, updateFeePackage, FeePackageItemInput } from '../acti
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
-import { EnrollmentLevel, BillingPeriod } from '@kms/database'
+import { EnrollmentLevel, BillingPeriod, ProgramType } from '@kms/database'
 
 interface FeeItem {
     id: string
@@ -22,6 +22,7 @@ interface PackageFormProps {
         name: string
         description: string | null
         level: string
+        programType: string
         academicYearId: string
         billingPeriod: string
         isActive: boolean
@@ -79,6 +80,10 @@ export function PackageForm({ academicYears, feeItems, initialData }: PackageFor
         return period.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     }
 
+    const formatProgramType = (pt: string) => {
+        return pt.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    }
+
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
         setIsPending(true)
@@ -88,6 +93,7 @@ export function PackageForm({ academicYears, feeItems, initialData }: PackageFor
         const data = {
             name: formData.get('name') as string,
             level: formData.get('level') as EnrollmentLevel,
+            programType: formData.get('programType') as ProgramType,
             academicYearId: formData.get('academicYearId') as string,
             billingPeriod: formData.get('billingPeriod') as BillingPeriod,
             description: formData.get('description') as string,
@@ -146,6 +152,22 @@ export function PackageForm({ academicYears, feeItems, initialData }: PackageFor
                             <option value="" disabled>Select Level</option>
                             {Object.values(EnrollmentLevel).map(level => (
                                 <option key={level} value={level}>{level}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label htmlFor="programType" className="text-sm font-medium text-gray-700">Program Type <span className="text-red-500">*</span></label>
+                        <select
+                            name="programType"
+                            id="programType"
+                            required
+                            defaultValue={initialData?.programType || ''}
+                            className="w-full px-3 py-2 border bg-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        >
+                            <option value="" disabled>Select Program Type</option>
+                            {Object.values(ProgramType).map(pt => (
+                                <option key={pt} value={pt}>{formatProgramType(pt)}</option>
                             ))}
                         </select>
                     </div>

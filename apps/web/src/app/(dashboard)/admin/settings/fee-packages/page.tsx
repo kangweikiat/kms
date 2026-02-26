@@ -1,4 +1,4 @@
-import { prisma, BillingPeriod, EnrollmentLevel } from '@kms/database'
+import { prisma, BillingPeriod, EnrollmentLevel, ProgramType } from '@kms/database'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { Plus, Pencil } from 'lucide-react'
@@ -43,6 +43,10 @@ export default async function FeePackagesPage(props: {
         return period.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     }
 
+    const formatProgramType = (pt: ProgramType) => {
+        return pt.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    }
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -76,6 +80,7 @@ export default async function FeePackagesPage(props: {
                             <tr>
                                 <th scope="col" className="px-6 py-4 font-semibold">Package Name</th>
                                 <th scope="col" className="px-6 py-4 font-semibold">Level</th>
+                                <th scope="col" className="px-6 py-4 font-semibold">Program</th>
                                 <th scope="col" className="px-6 py-4 font-semibold">Billing Period</th>
                                 <th scope="col" className="px-6 py-4 font-semibold text-center">Items</th>
                                 <th scope="col" className="px-6 py-4 font-semibold text-right">Subtotal</th>
@@ -101,6 +106,9 @@ export default async function FeePackagesPage(props: {
                                         </td>
                                         <td className="px-6 py-4">
                                             <LevelBadge level={pkg.level} />
+                                        </td>
+                                        <td className="px-6 py-4 font-medium text-gray-700">
+                                            {formatProgramType(pkg.programType)}
                                         </td>
                                         <td className="px-6 py-4 font-medium text-gray-700">
                                             {formatPeriod(pkg.billingPeriod)}
