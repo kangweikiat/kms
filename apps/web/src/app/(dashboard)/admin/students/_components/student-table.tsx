@@ -20,6 +20,10 @@ type BaseEnrollment = {
     enrollmentLevel: string
     programType: string
     academicYear: number
+    class: {
+        id: string
+        name: string
+    } | null
 }
 
 type StudentWithEnrollment = BaseStudent & {
@@ -31,7 +35,7 @@ interface StudentTableProps {
     year: number
 }
 
-type SortColumn = 'name' | 'level' | 'program' | 'status'
+type SortColumn = 'name' | 'level' | 'program' | 'status' | 'class'
 type SortDirection = 'asc' | 'desc' | null
 
 export function StudentTable({ students, year }: StudentTableProps) {
@@ -73,6 +77,10 @@ export function StudentTable({ students, year }: StudentTableProps) {
                 case 'program':
                     valA = enrollA?.programType || ''
                     valB = enrollB?.programType || ''
+                    break
+                case 'class':
+                    valA = enrollA?.class?.name || ''
+                    valB = enrollB?.class?.name || ''
                     break
                 case 'status':
                     // Map active to something sortable if needed, or just use string
@@ -133,6 +141,15 @@ export function StudentTable({ students, year }: StudentTableProps) {
                             </th>
                             <th
                                 className="px-6 py-4 text-sm font-medium text-gray-500 cursor-pointer group hover:bg-gray-100 transition"
+                                onClick={() => handleSort('class')}
+                            >
+                                <div className="flex items-center gap-2">
+                                    Class
+                                    <SortIcon column="class" />
+                                </div>
+                            </th>
+                            <th
+                                className="px-6 py-4 text-sm font-medium text-gray-500 cursor-pointer group hover:bg-gray-100 transition"
                                 onClick={() => handleSort('status')}
                             >
                                 <div className="flex items-center gap-2">
@@ -146,7 +163,7 @@ export function StudentTable({ students, year }: StudentTableProps) {
                     <tbody className="divide-y divide-gray-100">
                         {sortedStudents.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                                     No students found matching your criteria.
                                 </td>
                             </tr>
@@ -167,6 +184,18 @@ export function StudentTable({ students, year }: StudentTableProps) {
                                         <td className="px-6 py-4 text-sm text-gray-600">
                                             {// @ts-ignore
                                                 activeEnrollment ? <ProgramBadge type={activeEnrollment.programType} /> : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">
+                                            {activeEnrollment?.class ? (
+                                                <Link
+                                                    href={`/admin/classes/${activeEnrollment.class.id}`}
+                                                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline transition"
+                                                >
+                                                    {activeEnrollment.class.name}
+                                                </Link>
+                                            ) : (
+                                                <span className="text-gray-400 italic">Unassigned</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-sm">
                                             {activeEnrollment?.status === 'WITHDRAWN' ? (

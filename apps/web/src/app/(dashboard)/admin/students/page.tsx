@@ -64,7 +64,10 @@ export default async function StudentsPage(props: {
         include: {
             enrollments: {
                 where: { academicYear: year },
-                take: 1
+                take: 1,
+                include: {
+                    class: true
+                }
             }
         },
         orderBy: { createdAt: 'desc' },
