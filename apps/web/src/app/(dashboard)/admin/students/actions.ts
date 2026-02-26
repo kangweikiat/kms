@@ -62,6 +62,7 @@ function extractEnrollmentData(formData: FormData) {
 }
 
 export async function createStudent(prevState: any, formData: FormData) {
+    const fields = Object.fromEntries(formData.entries()) as Record<string, string>
     const studentData = extractStudentData(formData)
     const enrollmentData = extractEnrollmentData(formData)
 
@@ -82,7 +83,10 @@ export async function createStudent(prevState: any, formData: FormData) {
         revalidatePath('/admin/students')
     } catch (error) {
         console.error('Failed to create student:', error)
-        return { error: 'Failed to create student. IC Number might be duplicate.' }
+        return {
+            error: 'Failed to create student. IC Number might be duplicate.',
+            fields
+        }
     }
 
     redirect('/admin/students')
@@ -97,6 +101,7 @@ export async function updateStudent(id: string, prevState: any, formData: FormDa
     // However, the form might still have enrollment fields if the user expects to edit them.
     // We should probably check if we need to update the *current active* enrollment too.
 
+    const fields = Object.fromEntries(formData.entries()) as Record<string, string>
     const studentData = extractStudentData(formData)
     const enrollmentData = extractEnrollmentData(formData)
 
@@ -128,7 +133,10 @@ export async function updateStudent(id: string, prevState: any, formData: FormDa
         revalidatePath(`/admin/students/${id}`)
     } catch (error) {
         console.error('Failed to update student:', error)
-        return { error: 'Failed to update student. Please try again.' }
+        return {
+            error: 'Failed to update student. Please try again.',
+            fields
+        }
     }
 
     redirect('/admin/students')
@@ -251,7 +259,8 @@ export async function enrollStudent(studentId: string, prevState: any, formData:
         await prisma.enrollment.create({
             data: {
                 ...enrollmentData,
-                studentId
+                studentId,
+                isNewStudent: false
             }
         })
     } catch (error) {

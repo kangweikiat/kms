@@ -64,11 +64,11 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="col-span-1 md:col-span-2 space-y-2">
                         <label className="text-sm font-medium text-gray-700">Name <span className="text-red-500">*</span></label>
-                        <input name="name" required type="text" defaultValue={student?.name} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. John Doe" />
+                        <input name="name" required type="text" defaultValue={state?.fields?.name || student?.name || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. John Doe" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">IC / MyKid <span className="text-red-500">*</span></label>
-                        <input name="icNo" required type="text" defaultValue={student?.icNo} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 150101-01-1234" />
+                        <input name="icNo" required type="text" defaultValue={state?.fields?.icNo || student?.icNo || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 150101-01-1234" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Date of Birth <span className="text-red-500">*</span></label>
@@ -76,20 +76,20 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                             name="dob"
                             required
                             type="date"
-                            defaultValue={student?.dob ? new Date(student.dob).toISOString().split('T')[0] : ''}
+                            defaultValue={state?.fields?.dob || (student?.dob ? new Date(student.dob).toISOString().split('T')[0] : '')}
                             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Gender <span className="text-red-500">*</span></label>
-                        <select name="gender" required defaultValue={student?.gender || 'MALE'} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                        <select name="gender" required defaultValue={state?.fields?.gender || student?.gender || 'MALE'} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
                             <option value="MALE">Male</option>
                             <option value="FEMALE">Female</option>
                         </select>
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Race <span className="text-red-500">*</span></label>
-                        <select name="race" required defaultValue={student?.race || 'MALAY'} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                        <select name="race" required defaultValue={state?.fields?.race || student?.race || 'MALAY'} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
                             <option value="MALAY">Malay</option>
                             <option value="CHINESE">Chinese</option>
                             <option value="INDIAN">Indian</option>
@@ -98,7 +98,7 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Religion</label>
-                        <input name="religion" type="text" defaultValue={student?.religion || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Islam" />
+                        <input name="religion" type="text" defaultValue={state?.fields?.religion || student?.religion || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Islam" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Nationality</label>
@@ -118,7 +118,7 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                             <input
                                 name="nationalityOther"
                                 type="text"
-                                defaultValue={student?.nationality && student.nationality !== 'Malaysian' ? student.nationality : ''}
+                                defaultValue={state?.fields?.nationalityOther || (student?.nationality && student.nationality !== 'Malaysian' ? student.nationality : '')}
                                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                                 placeholder="Please specify nationality"
                                 required
@@ -127,7 +127,7 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                     )}
                     <div className="col-span-1 md:col-span-2 space-y-2">
                         <label className="text-sm font-medium text-gray-700">Address</label>
-                        <textarea name="address" rows={2} defaultValue={student?.address || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <textarea name="address" rows={2} defaultValue={state?.fields?.address || student?.address || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                 </div>
             </div>
@@ -160,7 +160,7 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                         */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Level <span className="text-red-500">*</span></label>
-                        <select name="enrollmentLevel" required defaultValue={currentEnrollment?.enrollmentLevel} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                        <select name="enrollmentLevel" required defaultValue={state?.fields?.enrollmentLevel || currentEnrollment?.enrollmentLevel} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
                             <option value="M2">M2 (2 Years)</option>
                             <option value="M3">M3 (3 Years)</option>
                             <option value="M4">M4 (4 Years)</option>
@@ -175,7 +175,7 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                     <textarea
                         name="remarks"
                         rows={3}
-                        defaultValue={currentEnrollment?.remarks || ''}
+                        defaultValue={state?.fields?.remarks || currentEnrollment?.remarks || ''}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                         placeholder="Any additional information about the student..."
                     />
@@ -265,27 +265,27 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="col-span-1 md:col-span-2 space-y-2">
                         <label className="text-sm font-medium text-gray-700">Father's Name</label>
-                        <input name="fatherName" type="text" defaultValue={student?.fatherName || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <input name="fatherName" type="text" defaultValue={state?.fields?.fatherName || student?.fatherName || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Father's IC / Passport</label>
-                        <input name="fatherIc" type="text" defaultValue={student?.fatherIc || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <input name="fatherIc" type="text" defaultValue={state?.fields?.fatherIc || student?.fatherIc || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Father's Occupation</label>
-                        <input name="fatherOccupation" type="text" defaultValue={student?.fatherOccupation || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <input name="fatherOccupation" type="text" defaultValue={state?.fields?.fatherOccupation || student?.fatherOccupation || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div className="col-span-1 md:col-span-2 space-y-2 mt-4">
                         <label className="text-sm font-medium text-gray-700">Mother's Name</label>
-                        <input name="motherName" type="text" defaultValue={student?.motherName || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <input name="motherName" type="text" defaultValue={state?.fields?.motherName || student?.motherName || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Mother's IC / Passport</label>
-                        <input name="motherIc" type="text" defaultValue={student?.motherIc || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <input name="motherIc" type="text" defaultValue={state?.fields?.motherIc || student?.motherIc || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Mother's Occupation</label>
-                        <input name="motherOccupation" type="text" defaultValue={student?.motherOccupation || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <input name="motherOccupation" type="text" defaultValue={state?.fields?.motherOccupation || student?.motherOccupation || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                 </div>
             </div>
@@ -298,15 +298,15 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Contact Name</label>
-                        <input name="emergencyName" type="text" defaultValue={student?.emergencyName || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <input name="emergencyName" type="text" defaultValue={state?.fields?.emergencyName || student?.emergencyName || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Contact Phone</label>
-                        <input name="emergencyPhone" type="tel" defaultValue={student?.emergencyPhone || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <input name="emergencyPhone" type="tel" defaultValue={state?.fields?.emergencyPhone || student?.emergencyPhone || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                     <div className="col-span-1 md:col-span-2 space-y-2">
                         <label className="text-sm font-medium text-gray-700">Contact Address</label>
-                        <textarea name="emergencyAddress" rows={2} defaultValue={student?.emergencyAddress || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <textarea name="emergencyAddress" rows={2} defaultValue={state?.fields?.emergencyAddress || student?.emergencyAddress || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
                 </div>
             </div>

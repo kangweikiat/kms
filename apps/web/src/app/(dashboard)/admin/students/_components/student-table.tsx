@@ -2,11 +2,14 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Eye, Pencil, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react'
 import { ProgramBadge } from './program-badge'
 import { DeleteButton } from './delete-button'
 import { ReactivateButton } from './reactivate-button'
 import { HardDeleteButton } from './hard-delete-button'
+import { ClassBadge } from '../../classes/_components/class-badge'
+import { LevelBadge } from './level-badge'
 
 // Define the needed types
 type BaseStudent = {
@@ -20,6 +23,10 @@ type BaseEnrollment = {
     enrollmentLevel: string
     programType: string
     academicYear: number
+    class: {
+        id: string
+        name: string
+    } | null
 }
 
 type StudentWithEnrollment = BaseStudent & {
@@ -27,28 +34,51 @@ type StudentWithEnrollment = BaseStudent & {
 }
 
 interface StudentTableProps {
-    students: StudentWithEnrollment[]
+    students: (BaseStudent & {
+        enrollments: (BaseEnrollment & { class: { id: string, name: string } | null })[]
+    })[]
     year: number
+    currentPage?: number
+    totalPages?: number
+    totalItems?: number
 }
 
-type SortColumn = 'name' | 'level' | 'program' | 'status'
+type SortColumn = 'name' | 'level' | 'program' | 'status' | 'class'
 type SortDirection = 'asc' | 'desc' | null
 
-export function StudentTable({ students, year }: StudentTableProps) {
+export function StudentTable({ students, year, currentPage = 1, totalPages = 1, totalItems = 0 }: StudentTableProps) {
+    const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
     const [sortColumn, setSortColumn] = useState<SortColumn | null>(null)
     const [sortDirection, setSortDirection] = useState<SortDirection>(null)
 
     const handleSort = (column: SortColumn) => {
+        let newSortDirection: SortDirection = 'asc'
         if (sortColumn === column) {
-            if (sortDirection === 'asc') setSortDirection('desc')
+            if (sortDirection === 'asc') newSortDirection = 'desc'
             else if (sortDirection === 'desc') {
-                setSortDirection(null)
+                newSortDirection = null
                 setSortColumn(null)
             }
         } else {
             setSortColumn(column)
-            setSortDirection('asc')
+            newSortDirection = 'asc'
         }
+        setSortDirection(newSortDirection)
+
+        const params = new URLSearchParams(searchParams.toString())
+        if (newSortDirection) {
+            params.set('sortColumn', column)
+            params.set('sortDirection', newSortDirection)
+        } else {
+            params.delete('sortColumn')
+            params.delete('sortDirection')
+        }
+        // Reset page to 1 when sorting
+        params.set('page', '1')
+
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false })
     }
 
     const sortedStudents = useMemo(() => {
@@ -74,6 +104,10 @@ export function StudentTable({ students, year }: StudentTableProps) {
                     valA = enrollA?.programType || ''
                     valB = enrollB?.programType || ''
                     break
+                case 'class':
+                    valA = enrollA?.class?.name || ''
+                    valB = enrollB?.class?.name || ''
+                    break
                 case 'status':
                     // Map active to something sortable if needed, or just use string
                     valA = enrollA?.status || 'INACTIVE'
@@ -86,6 +120,12 @@ export function StudentTable({ students, year }: StudentTableProps) {
             return 0
         })
     }, [students, sortColumn, sortDirection])
+
+    const handlePageChange = (newPage: number) => {
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('page', newPage.toString())
+        router.replace(`${pathname}?${params.toString()}`)
+    }
 
     const SortIcon = ({ column }: { column: SortColumn }) => {
         if (sortColumn !== column || !sortDirection) {
@@ -133,6 +173,15 @@ export function StudentTable({ students, year }: StudentTableProps) {
                             </th>
                             <th
                                 className="px-6 py-4 text-sm font-medium text-gray-500 cursor-pointer group hover:bg-gray-100 transition"
+                                onClick={() => handleSort('class')}
+                            >
+                                <div className="flex items-center gap-2">
+                                    Class
+                                    <SortIcon column="class" />
+                                </div>
+                            </th>
+                            <th
+                                className="px-6 py-4 text-sm font-medium text-gray-500 cursor-pointer group hover:bg-gray-100 transition"
                                 onClick={() => handleSort('status')}
                             >
                                 <div className="flex items-center gap-2">
@@ -146,7 +195,7 @@ export function StudentTable({ students, year }: StudentTableProps) {
                     <tbody className="divide-y divide-gray-100">
                         {sortedStudents.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={7} className="px-6 py-12 text-center text-gray-500 bg-white">
                                     No students found matching your criteria.
                                 </td>
                             </tr>
@@ -163,10 +212,21 @@ export function StudentTable({ students, year }: StudentTableProps) {
                                             </div>
                                             <div className="text-xs text-gray-500">{student.icNo}</div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">{activeEnrollment?.enrollmentLevel || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">
+                                            {activeEnrollment ? <LevelBadge level={activeEnrollment.enrollmentLevel} /> : '-'}
+                                        </td>
                                         <td className="px-6 py-4 text-sm text-gray-600">
                                             {// @ts-ignore
                                                 activeEnrollment ? <ProgramBadge type={activeEnrollment.programType} /> : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">
+                                            {activeEnrollment?.class ? (
+                                                <ClassBadge classData={activeEnrollment.class} />
+                                            ) : (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 italic">
+                                                    Unassigned
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-sm">
                                             {activeEnrollment?.status === 'WITHDRAWN' ? (
@@ -226,6 +286,31 @@ export function StudentTable({ students, year }: StudentTableProps) {
                     </tbody>
                 </table>
             </div>
-        </div >
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-sm text-gray-500">
+                        Showing <span className="font-medium">{(currentPage - 1) * 20 + 1}</span> to <span className="font-medium">{Math.min(currentPage * 20, totalItems || 0)}</span> of <span className="font-medium">{totalItems}</span> students
+                    </p>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
     )
 }

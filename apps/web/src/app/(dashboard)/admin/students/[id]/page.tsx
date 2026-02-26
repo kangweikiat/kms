@@ -7,6 +7,7 @@ import { ProgramBadge } from '../_components/program-badge'
 import { DeleteButton } from '../_components/delete-button'
 import { ReactivateButton } from '../_components/reactivate-button'
 import { HardDeleteButton } from '../_components/hard-delete-button'
+import { LevelBadge } from '../_components/level-badge'
 
 export default async function StudentDetailsPage({
     params,
@@ -91,42 +92,42 @@ export default async function StudentDetailsPage({
             </div>
 
             {/* Content Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-6">
                 {/* 1. Student Information */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
                     <h2 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">
                         Personal Information
                     </h2>
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">IC / MyKid</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.icNo}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">IC / MyKid</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.icNo}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Date of Birth</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Date of Birth</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">
                                 {new Date(student.dob).toLocaleDateString()}
                             </span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Gender</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900 capitalize">{student.gender.toLowerCase()}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Gender</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900 capitalize">{student.gender.toLowerCase()}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Race</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900 capitalize">{student.race.toLowerCase()}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Race</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900 capitalize">{student.race.toLowerCase()}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Religion</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.religion || '-'}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Religion</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.religion || '-'}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Nationality</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.nationality || '-'}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Nationality</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.nationality || '-'}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Address</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.address || '-'}</span>
+                        <div className="flex md:col-span-2">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Address</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.address || '-'}</span>
                         </div>
                     </div>
                 </div>
@@ -145,15 +146,15 @@ export default async function StudentDetailsPage({
                         </Link>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                         {student.enrollments && student.enrollments.length > 0 ? (
                             student.enrollments.map((enrollment: any) => (
-                                <div key={enrollment.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-2">
+                                <div key={enrollment.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100 flex flex-col gap-3">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <div className="font-semibold text-gray-900">{enrollment.academicYear} - {enrollment.enrollmentLevel}</div>
-                                            <div className="text-sm text-gray-500">
-                                                <ProgramBadge type={enrollment.programType} />
+                                            <div className="font-bold text-gray-900 text-base">{enrollment.academicYear}</div>
+                                            <div className="text-sm text-gray-600 mt-0.5">
+                                                {/* Level {enrollment.enrollmentLevel} */}
                                             </div>
                                         </div>
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${enrollment.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
@@ -163,11 +164,28 @@ export default async function StudentDetailsPage({
                                             {enrollment.status}
                                         </span>
                                     </div>
-                                    <div className="text-sm text-gray-600">
-                                        Transport: {enrollment.transport ? 'Yes' : 'No'}
+
+                                    <div className="space-y-1.5 pt-2 border-t border-gray-200/60">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-500">Program</span>
+                                            <span className="font-medium text-gray-900">{enrollment.programType.replace(/_/g, ' ')}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-500">Class</span>
+                                            <span className="font-medium text-gray-900">{enrollment.class ? enrollment.class.name : 'Unassigned'}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-500">Level</span>
+                                            <LevelBadge level={enrollment.enrollmentLevel} />
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-500">Transport</span>
+                                            <span className="font-medium text-gray-900">{enrollment.transport ? 'Yes' : 'No'}</span>
+                                        </div>
                                     </div>
+
                                     {enrollment.remarks && (
-                                        <div className="text-sm text-gray-500 italic mt-2">
+                                        <div className="text-sm text-gray-500 italic mt-2 bg-white p-2 rounded border border-gray-100">
                                             "{enrollment.remarks}"
                                         </div>
                                     )}
@@ -184,23 +202,23 @@ export default async function StudentDetailsPage({
                     <h2 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">
                         Parent Information
                     </h2>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <h3 className="text-sm font-semibold text-gray-700">Father</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <h3 className="text-sm font-semibold text-gray-700 border-b border-gray-200 pb-1">Father's Details</h3>
                             <div className="grid grid-cols-3 gap-1">
                                 <span className="text-sm text-gray-500">Name:</span>
-                                <span className="col-span-2 text-sm text-gray-900">{student.fatherName || '-'}</span>
+                                <span className="col-span-2 text-sm text-gray-900 font-medium">{student.fatherName || '-'}</span>
                                 <span className="text-sm text-gray-500">IC:</span>
                                 <span className="col-span-2 text-sm text-gray-900">{student.fatherIc || '-'}</span>
                                 <span className="text-sm text-gray-500">Occupation:</span>
                                 <span className="col-span-2 text-sm text-gray-900">{student.fatherOccupation || '-'}</span>
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <h3 className="text-sm font-semibold text-gray-700">Mother</h3>
+                        <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <h3 className="text-sm font-semibold text-gray-700 border-b border-gray-200 pb-1">Mother's Details</h3>
                             <div className="grid grid-cols-3 gap-1">
                                 <span className="text-sm text-gray-500">Name:</span>
-                                <span className="col-span-2 text-sm text-gray-900">{student.motherName || '-'}</span>
+                                <span className="col-span-2 text-sm text-gray-900 font-medium">{student.motherName || '-'}</span>
                                 <span className="text-sm text-gray-500">IC:</span>
                                 <span className="col-span-2 text-sm text-gray-900">{student.motherIc || '-'}</span>
                                 <span className="text-sm text-gray-500">Occupation:</span>
@@ -210,23 +228,23 @@ export default async function StudentDetailsPage({
                     </div>
                 </div>
 
-                {/* 4. Emergency Contact */}
+                {/* Emergency Contact */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">
+                    <h2 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2 text-red-600 flex items-center gap-2">
                         Emergency Contact
                     </h2>
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Name</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.emergencyName || '-'}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Name</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.emergencyName || '-'}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Phone</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.emergencyPhone || '-'}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Phone</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.emergencyPhone || '-'}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Address</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.emergencyAddress || '-'}</span>
+                        <div className="flex md:col-span-2">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Address</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.emergencyAddress || '-'}</span>
                         </div>
                     </div>
                 </div>

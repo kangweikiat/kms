@@ -96,6 +96,7 @@ model Enrollment {
   transport       Boolean @default(false)
   remarks         String?
   status          EnrollmentStatus @default(ACTIVE)
+  isNewStudent    Boolean @default(true)
 
   classId String?
   class   Class?  @relation(fields: [classId], references: [id])
@@ -129,10 +130,31 @@ enum ProgramType {
   FULL_DAY
 }
 
+model Building {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  classes     Class[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Class {
   id          String   @id @default(uuid())
   name        String
   description String?
+  capacity    Int
+  level       EnrollmentLevel @default(M2)
+  isActive    Boolean  @default(true)
+
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id])
+
   teacherId   String?
   teacher     TeacherProfile? @relation(fields: [teacherId], references: [id])
 
@@ -140,6 +162,8 @@ model Class {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([name, academicYearId])
 }
 
 model Attendance {
@@ -172,6 +196,7 @@ model AcademicYear {
   status    AcademicYearStatus @default(INACTIVE)
   startDate DateTime?
   endDate   DateTime?
+  classes   Class[]
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 }
