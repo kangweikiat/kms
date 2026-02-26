@@ -124,9 +124,9 @@ export default async function StudentDetailsPage({
                             <span className="text-sm text-gray-500">Nationality</span>
                             <span className="col-span-2 text-sm font-medium text-gray-900">{student.nationality || '-'}</span>
                         </div>
-                        <div className="grid grid-cols-3 md:col-span-2">
+                        <div className="grid grid-cols-3 md:grid-cols-6 md:col-span-2">
                             <span className="text-sm text-gray-500 md:col-span-1">Address</span>
-                            <span className="col-span-2 md:col-span-2 text-sm font-medium text-gray-900">{student.address || '-'}</span>
+                            <span className="col-span-2 md:col-span-5 text-sm font-medium text-gray-900">{student.address || '-'}</span>
                         </div>
                     </div>
                 </div>
@@ -237,9 +237,9 @@ export default async function StudentDetailsPage({
                             <span className="text-sm text-gray-500">Phone</span>
                             <span className="col-span-2 text-sm font-medium text-gray-900">{student.emergencyPhone || '-'}</span>
                         </div>
-                        <div className="grid grid-cols-3 md:col-span-2">
+                        <div className="grid grid-cols-3 md:grid-cols-6 md:col-span-2">
                             <span className="text-sm text-gray-500 md:col-span-1">Address</span>
-                            <span className="col-span-2 md:col-span-2 text-sm font-medium text-gray-900">{student.emergencyAddress || '-'}</span>
+                            <span className="col-span-2 md:col-span-5 text-sm font-medium text-gray-900">{student.emergencyAddress || '-'}</span>
                         </div>
                     </div>
                 </div>
