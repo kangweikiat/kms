@@ -98,35 +98,35 @@ export default async function StudentDetailsPage({
                         Personal Information
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">IC / MyKid</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.icNo}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">IC / MyKid</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.icNo}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Date of Birth</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Date of Birth</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">
                                 {new Date(student.dob).toLocaleDateString()}
                             </span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Gender</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900 capitalize">{student.gender.toLowerCase()}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Gender</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900 capitalize">{student.gender.toLowerCase()}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Race</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900 capitalize">{student.race.toLowerCase()}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Race</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900 capitalize">{student.race.toLowerCase()}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Religion</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.religion || '-'}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Religion</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.religion || '-'}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Nationality</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.nationality || '-'}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Nationality</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.nationality || '-'}</span>
                         </div>
-                        <div className="grid grid-cols-3 md:col-span-2 md:grid-cols-subgrid">
-                            <span className="text-sm text-gray-500">Address</span>
-                            <span className="col-span-2 md:col-span-1 text-sm font-medium text-gray-900">{student.address || '-'}</span>
+                        <div className="flex md:col-span-2">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Address</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.address || '-'}</span>
                         </div>
                     </div>
                 </div>
@@ -229,17 +229,17 @@ export default async function StudentDetailsPage({
                         Emergency Contact
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Name</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.emergencyName || '-'}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Name</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.emergencyName || '-'}</span>
                         </div>
-                        <div className="grid grid-cols-3">
-                            <span className="text-sm text-gray-500">Phone</span>
-                            <span className="col-span-2 text-sm font-medium text-gray-900">{student.emergencyPhone || '-'}</span>
+                        <div className="flex">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Phone</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.emergencyPhone || '-'}</span>
                         </div>
-                        <div className="grid grid-cols-3 md:col-span-2 md:grid-cols-subgrid">
-                            <span className="text-sm text-gray-500">Address</span>
-                            <span className="col-span-2 md:col-span-1 text-sm font-medium text-gray-900">{student.emergencyAddress || '-'}</span>
+                        <div className="flex md:col-span-2">
+                            <span className="w-32 shrink-0 text-sm text-gray-500">Address</span>
+                            <span className="flex-1 text-sm font-medium text-gray-900">{student.emergencyAddress || '-'}</span>
                         </div>
                     </div>
                 </div>
