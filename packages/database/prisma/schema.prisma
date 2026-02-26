@@ -246,6 +246,7 @@ model FeePackage {
   updatedAt      DateTime        @updatedAt
 
   feePackageItems FeePackageItem[]
+  collectionRule  CollectionRule?
 
   @@unique([academicYearId, level, billingPeriod])
 }
@@ -261,4 +262,17 @@ model FeePackageItem {
   sortOrder    Int        @default(0)
 
   @@unique([feePackageId, feeItemId])
+}
+
+model CollectionRule {
+  id                  String     @id @default(uuid())
+  feePackageId        String     @unique
+  feePackage          FeePackage @relation(fields: [feePackageId], references: [id], onDelete: Cascade)
+  appliesToChargeType ChargeType @default(MONTHLY)
+  upfrontMonths       Int        @default(1)
+  description         String?
+  isActive            Boolean    @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

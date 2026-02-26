@@ -17,6 +17,8 @@ export async function createFeePackage(
         billingPeriod: any
         description?: string
         isActive: boolean
+        collectionRuleUpfrontMonths?: number | null
+        collectionRuleDescription?: string | null
     },
     items: FeePackageItemInput[]
 ) {
@@ -39,7 +41,18 @@ export async function createFeePackage(
                         unitAmount: item.unitAmount,
                         sortOrder: index
                     }))
-                }
+                },
+                ...(data.collectionRuleUpfrontMonths && data.collectionRuleUpfrontMonths > 0
+                    ? {
+                        collectionRule: {
+                            create: {
+                                upfrontMonths: data.collectionRuleUpfrontMonths,
+                                description: data.collectionRuleDescription,
+                                isActive: true
+                            }
+                        }
+                    }
+                    : {})
             }
         })
         revalidatePath('/admin/settings/fee-packages')
@@ -61,6 +74,8 @@ export async function updateFeePackage(
         billingPeriod: any
         description?: string
         isActive: boolean
+        collectionRuleUpfrontMonths?: number | null
+        collectionRuleDescription?: string | null
     },
     items: FeePackageItemInput[]
 ) {
@@ -91,7 +106,29 @@ export async function updateFeePackage(
                             unitAmount: item.unitAmount,
                             sortOrder: index
                         }))
-                    }
+                    },
+                    ...(data.collectionRuleUpfrontMonths && data.collectionRuleUpfrontMonths > 0
+                        ? {
+                            collectionRule: {
+                                upsert: {
+                                    create: {
+                                        upfrontMonths: data.collectionRuleUpfrontMonths,
+                                        description: data.collectionRuleDescription,
+                                        isActive: true
+                                    },
+                                    update: {
+                                        upfrontMonths: data.collectionRuleUpfrontMonths,
+                                        description: data.collectionRuleDescription,
+                                        isActive: true
+                                    }
+                                }
+                            }
+                        }
+                        : {
+                            collectionRule: {
+                                delete: true
+                            }
+                        })
                 }
             })
         })

@@ -30,6 +30,11 @@ interface PackageFormProps {
             quantity: number
             unitAmount: number | null
         }[]
+        collectionRule?: {
+            upfrontMonths: number
+            description: string | null
+            isActive: boolean
+        } | null
     }
 }
 
@@ -41,6 +46,9 @@ export function PackageForm({ academicYears, feeItems, initialData }: PackageFor
     const [error, setError] = useState<string | null>(null)
     const [selectedItems, setSelectedItems] = useState<FeePackageItemInput[]>(
         initialData?.feePackageItems || []
+    )
+    const [hasCollectionRule, setHasCollectionRule] = useState(
+        !!initialData?.collectionRule
     )
 
     const addItem = () => {
@@ -83,7 +91,9 @@ export function PackageForm({ academicYears, feeItems, initialData }: PackageFor
             academicYearId: formData.get('academicYearId') as string,
             billingPeriod: formData.get('billingPeriod') as BillingPeriod,
             description: formData.get('description') as string,
-            isActive: isEdit ? formData.get('isActive') === 'true' : true
+            isActive: isEdit ? formData.get('isActive') === 'true' : true,
+            collectionRuleUpfrontMonths: hasCollectionRule ? parseInt(formData.get('collectionRuleUpfrontMonths') as string) : null,
+            collectionRuleDescription: hasCollectionRule ? formData.get('collectionRuleDescription') as string : null,
         }
 
         const action = isEdit && initialData
@@ -182,6 +192,50 @@ export function PackageForm({ academicYears, feeItems, initialData }: PackageFor
                             placeholder="Optional details about this package..."
                             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                         />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                        <label className="text-sm font-medium text-gray-700">Collection Rule</label>
+                        <div className="flex flex-col gap-4 mt-2 p-4 bg-gray-50 border border-gray-100 rounded-lg">
+                            <label className="flex items-center gap-2 cursor-pointer w-fit">
+                                <input
+                                    type="checkbox"
+                                    checked={hasCollectionRule}
+                                    onChange={(e) => setHasCollectionRule(e.target.checked)}
+                                    className="text-blue-600 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Enable Upfront Collection Rule for Monthly Items</span>
+                            </label>
+
+                            {hasCollectionRule && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-200">
+                                    <div className="space-y-2">
+                                        <label htmlFor="collectionRuleUpfrontMonths" className="text-sm font-medium text-gray-700">Upfront Months <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="number"
+                                            name="collectionRuleUpfrontMonths"
+                                            id="collectionRuleUpfrontMonths"
+                                            required={hasCollectionRule}
+                                            min={1}
+                                            defaultValue={initialData?.collectionRule?.upfrontMonths || 1}
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                        <p className="text-xs text-gray-500">Number of monthly fees collected upfront (e.g. 2 for first and last month).</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="collectionRuleDescription" className="text-sm font-medium text-gray-700">Rule Description</label>
+                                        <input
+                                            type="text"
+                                            name="collectionRuleDescription"
+                                            id="collectionRuleDescription"
+                                            defaultValue={initialData?.collectionRule?.description || ''}
+                                            placeholder="e.g. Collect first and last month upfront"
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {isEdit && (

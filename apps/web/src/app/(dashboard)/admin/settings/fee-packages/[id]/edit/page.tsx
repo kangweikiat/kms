@@ -11,7 +11,8 @@ export default async function EditPackagePage(props: { params: Promise<{ id: str
         include: {
             feePackageItems: {
                 orderBy: { sortOrder: 'asc' }
-            }
+            },
+            collectionRule: true
         }
     })
 
