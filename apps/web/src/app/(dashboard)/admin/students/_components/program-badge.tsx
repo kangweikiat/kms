@@ -2,9 +2,10 @@ import { ProgramType } from '@kms/database'
 
 interface ProgramBadgeProps {
     type: string // Using string to be flexible with prisma output, but conceptually ProgramType
+    className?: string
 }
 
-export function ProgramBadge({ type }: ProgramBadgeProps) {
+export function ProgramBadge({ type, className }: ProgramBadgeProps) {
     const getStyle = (type: string) => {
         switch (type) {
             case 'FULL_DAY':
@@ -40,7 +41,7 @@ export function ProgramBadge({ type }: ProgramBadgeProps) {
     }
 
     return (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStyle(type)}`}>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${getStyle(type)} ${className || 'text-xs'}`}>
             {getLabel(type)}
         </span>
     )

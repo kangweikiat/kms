@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { assignStudentsToClass } from '../../actions'
 import { toast } from 'sonner'
 import { Plus, X, Search, Loader2, CheckSquare, Square } from 'lucide-react'
+import { ProgramBadge } from '../../../students/_components/program-badge'
 
 // Simple type for the students we pass in
 type AvailableStudent = {
@@ -156,7 +157,7 @@ export function AssignStudentModal({ classId, availableStudents, isFull }: Assig
                                                     >
                                                         {enrollment.student.race}
                                                     </span>
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800 uppercase">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase ${enrollment.student.gender.toLowerCase() === 'male' ? 'bg-sky-100 text-sky-800' : 'bg-pink-100 text-pink-800'}`}>
                                                         {enrollment.student.gender}
                                                     </span>
                                                     <span
@@ -164,9 +165,7 @@ export function AssignStudentModal({ classId, availableStudents, isFull }: Assig
                                                     >
                                                         {enrollment.isNewStudent ? 'New' : 'Old'}
                                                     </span>
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 uppercase">
-                                                        {enrollment.programType.replace(/_/g, ' ')}
-                                                    </span>
+                                                    <ProgramBadge type={enrollment.programType} className="text-[10px]" />
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${enrollment.transport ? 'bg-teal-100 text-teal-800' : 'bg-gray-100 text-gray-800'}`}>
                                                         {enrollment.transport ? 'Transport' : 'No Transport'}
                                                     </span>

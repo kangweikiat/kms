@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { ArrowLeft, Users, Building, ShieldCheck, Mail, Phone } from 'lucide-react'
 import { AssignStudentModal } from './_components/assign-student-modal'
 import { RemoveStudentButton } from './_components/remove-student-button'
-
+import { ClassActions } from '../_components/class-actions'
+import { ProgramBadge } from '../../students/_components/program-badge'
 export default async function ClassDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
 
@@ -152,7 +153,7 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
                                                     >
                                                         {enrollment.student.race}
                                                     </span>
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 uppercase">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium uppercase ${enrollment.student.gender.toLowerCase() === 'male' ? 'bg-sky-100 text-sky-800' : 'bg-pink-100 text-pink-800'}`}>
                                                         {enrollment.student.gender}
                                                     </span>
                                                     <span
@@ -160,9 +161,7 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
                                                     >
                                                         {enrollment.isNewStudent ? 'New' : 'Old'}
                                                     </span>
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 uppercase">
-                                                        {enrollment.programType.replace(/_/g, ' ')}
-                                                    </span>
+                                                    <ProgramBadge type={enrollment.programType} className="text-xs" />
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${enrollment.transport ? 'bg-teal-100 text-teal-800' : 'bg-gray-100 text-gray-800'}`}>
                                                         {enrollment.transport ? 'Transport' : 'No Transport'}
                                                     </span>
