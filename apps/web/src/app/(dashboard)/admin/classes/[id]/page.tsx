@@ -166,49 +166,50 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
                             <div className="mt-8 space-y-6 pt-6 border-t border-gray-100">
                                 <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Class Demographics</h3>
 
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {/* Gender */}
-                                    <div>
-                                        <div className="text-xs text-gray-500 mb-1">Gender</div>
-                                        <div className="flex gap-2">
-                                            <div className="flex-1 bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1.5 rounded text-center">Boys: {stats.gender.male}</div>
-                                            <div className="flex-1 bg-pink-50 text-pink-700 text-xs font-medium px-2 py-1.5 rounded text-center">Girls: {stats.gender.female}</div>
-                                        </div>
-                                    </div>
-
-                                    {/* Status */}
-                                    <div>
-                                        <div className="text-xs text-gray-500 mb-1">Student Status</div>
-                                        <div className="flex gap-2">
-                                            <div className="flex-1 bg-green-50 text-green-700 text-xs font-medium px-2 py-1.5 rounded text-center">New: {stats.status.new}</div>
-                                            <div className="flex-1 bg-orange-50 text-orange-700 text-xs font-medium px-2 py-1.5 rounded text-center">Returning: {stats.status.returning}</div>
-                                        </div>
+                                    <div className="flex justify-between items-center text-sm border-b border-gray-50 pb-2">
+                                        <span className="text-gray-500">Gender</span>
+                                        <span className="font-medium text-gray-900">
+                                            {stats.gender.male} Boys <span className="text-gray-300 mx-1">•</span> {stats.gender.female} Girls
+                                        </span>
                                     </div>
 
                                     {/* Program */}
-                                    <div>
-                                        <div className="text-xs text-gray-500 mb-1">Program</div>
-                                        <div className="flex gap-2">
-                                            <div className="flex-1 bg-purple-50 text-purple-700 text-xs font-medium px-2 py-1.5 rounded text-center">Full Day: {stats.program.fullDay}</div>
-                                            <div className="flex-1 bg-indigo-50 text-indigo-700 text-xs font-medium px-2 py-1.5 rounded text-center">Half Day: {stats.program.halfDay}</div>
-                                        </div>
+                                    <div className="flex justify-between items-center text-sm border-b border-gray-50 pb-2">
+                                        <span className="text-gray-500">Program</span>
+                                        <span className="font-medium text-gray-900">
+                                            {stats.program.fullDay} Full Day <span className="text-gray-300 mx-1">•</span> {stats.program.halfDay} Half Day
+                                        </span>
+                                    </div>
+
+                                    {/* Status */}
+                                    <div className="flex justify-between items-center text-sm border-b border-gray-50 pb-2">
+                                        <span className="text-gray-500">Status</span>
+                                        <span className="font-medium text-gray-900">
+                                            {stats.status.new} New <span className="text-gray-300 mx-1">•</span> {stats.status.returning} Returning
+                                        </span>
                                     </div>
 
                                     {/* Race Breakdown */}
-                                    <div>
-                                        <div className="text-xs text-gray-500 mb-1">Race Breakdown</div>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div className="bg-green-50 text-green-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
-                                                <span>Malay:</span> <span>{stats.race.malay}</span>
+                                    <div className="pt-1">
+                                        <span className="text-xs text-gray-500 block mb-2">RACE BREAKDOWN</span>
+                                        <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm font-medium text-gray-800">
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500"></div>Malay</div>
+                                                <span>{stats.race.malay}</span>
                                             </div>
-                                            <div className="bg-yellow-50 text-yellow-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
-                                                <span>Chinese:</span> <span>{stats.race.chinese}</span>
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-yellow-400"></div>Chinese</div>
+                                                <span>{stats.race.chinese}</span>
                                             </div>
-                                            <div className="bg-purple-50 text-purple-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
-                                                <span>Indian:</span> <span>{stats.race.indian}</span>
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-purple-500"></div>Indian</div>
+                                                <span>{stats.race.indian}</span>
                                             </div>
-                                            <div className="bg-gray-50 text-gray-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
-                                                <span>Others:</span> <span>{stats.race.others}</span>
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-gray-300"></div>Others</div>
+                                                <span>{stats.race.others}</span>
                                             </div>
                                         </div>
                                     </div>
