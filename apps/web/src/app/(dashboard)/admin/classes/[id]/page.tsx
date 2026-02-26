@@ -8,6 +8,7 @@ import { ClassActions } from '../_components/class-actions'
 import { ClassBadge } from '../_components/class-badge'
 import { LevelBadge } from '../../students/_components/level-badge'
 import { ProgramBadge } from '../../students/_components/program-badge'
+import { GeneratePdfButton } from './_components/generate-pdf-button'
 export default async function ClassDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
 
@@ -94,19 +95,25 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
-            <div className="flex items-center gap-4">
-                <Link
-                    href="/admin/classes"
-                    className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition"
-                >
-                    <ArrowLeft className="w-5 h-5" />
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                        <ClassBadge classData={classData} className="text-2xl py-1 px-4" />
-                        ({classData.academicYear.year})
-                    </h1>
-                    <p className="text-sm text-gray-500 mt-1">Manage students assigned to this class.</p>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Link
+                        href="/admin/classes"
+                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                            <ClassBadge classData={classData} className="text-2xl py-1 px-4" />
+                            ({classData.academicYear.year})
+                        </h1>
+                        <p className="text-sm text-gray-500 mt-1">Manage students assigned to this class.</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <GeneratePdfButton classData={classData} enrollments={classData.enrollments} />
+                    <ClassActions id={classData.id} isActive={classData.isActive} />
                 </div>
             </div>
 
