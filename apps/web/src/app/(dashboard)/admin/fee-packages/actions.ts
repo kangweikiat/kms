@@ -1,0 +1,119 @@
+'use server'
+
+import { prisma } from '@kms/database'
+import { revalidatePath } from 'next/cache'
+
+export interface FeePackageItemInput {
+    feeItemId: string
+    quantity: number
+    unitAmount: number | null
+}
+
+export async function createFeePackage(
+    data: {
+        name: string
+        level: any
+        academicYearId: string
+        billingPeriod: any
+        description?: string
+        isActive: boolean
+    },
+    items: FeePackageItemInput[]
+) {
+    if (!data.name || !data.level || !data.academicYearId || !data.billingPeriod) {
+        return { error: 'Please fill in all required package fields.' }
+    }
+
+    if (items.length === 0) {
+        return { error: 'Package must contain at least one fee item.' }
+    }
+
+    try {
+        await prisma.feePackage.create({
+            data: {
+                ...data,
+                feePackageItems: {
+                    create: items.map((item, index) => ({
+                        feeItemId: item.feeItemId,
+                        quantity: item.quantity,
+                        unitAmount: item.unitAmount,
+                        sortOrder: index
+                    }))
+                }
+            }
+        })
+        revalidatePath('/admin/fee-packages')
+        return { success: true }
+    } catch (error: any) {
+        if (error.code === 'P2002') {
+            return { error: 'A Fee Package for this level and billing period already exists in the selected academic year.' }
+        }
+        return { error: 'Failed to create fee package.' }
+    }
+}
+
+export async function updateFeePackage(
+    id: string,
+    data: {
+        name: string
+        level: any
+        academicYearId: string
+        billingPeriod: any
+        description?: string
+        isActive: boolean
+    },
+    items: FeePackageItemInput[]
+) {
+    if (!data.name || !data.level || !data.academicYearId || !data.billingPeriod) {
+        return { error: 'Please fill in all required package fields.' }
+    }
+
+    if (items.length === 0) {
+        return { error: 'Package must contain at least one fee item.' }
+    }
+
+    try {
+        await prisma.$transaction(async (tx) => {
+            // Delete existing items
+            await tx.feePackageItem.deleteMany({
+                where: { feePackageId: id }
+            })
+
+            // Update package and create new items
+            await tx.feePackage.update({
+                where: { id },
+                data: {
+                    ...data,
+                    feePackageItems: {
+                        create: items.map((item, index) => ({
+                            feeItemId: item.feeItemId,
+                            quantity: item.quantity,
+                            unitAmount: item.unitAmount,
+                            sortOrder: index
+                        }))
+                    }
+                }
+            })
+        })
+        revalidatePath('/admin/fee-packages')
+        return { success: true }
+    } catch (error: any) {
+        if (error.code === 'P2002') {
+            return { error: 'A Fee Package for this level and billing period already exists in the selected academic year.' }
+        }
+        return { error: 'Failed to update fee package.' }
+    }
+}
+
+export async function deleteFeePackage(id: string) {
+    try {
+        // Cascade delete will handle FeePackageItem automatically based on schema
+        await prisma.feePackage.delete({
+            where: { id }
+        })
+        revalidatePath('/admin/fee-packages')
+        return { success: true }
+    } catch (error) {
+        return { error: 'Failed to delete fee package.' }
+    }
+}

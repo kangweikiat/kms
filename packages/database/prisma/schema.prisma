@@ -194,9 +194,10 @@ model AcademicYear {
   id        String             @id @default(uuid())
   year      Int                @unique
   status    AcademicYearStatus @default(INACTIVE)
-  startDate DateTime?
+  startDate   DateTime?
   endDate   DateTime?
   classes   Class[]
+  feePackages FeePackage[]
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 }
@@ -205,4 +206,53 @@ enum AcademicYearStatus {
   ACTIVE
   COMPLETED
   INACTIVE
+}
+
+enum BillingPeriod {
+  YEARLY
+  FIRST_HALF_YEAR
+  SECOND_HALF_YEAR
+}
+
+model FeeItem {
+  id            String           @id @default(uuid())
+  name          String
+  code          String           @unique
+  defaultAmount Float
+  description   String?
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  feePackageItems FeePackageItem[]
+}
+
+model FeePackage {
+  id             String          @id @default(uuid())
+  name           String
+  level          EnrollmentLevel
+  academicYearId String
+  academicYear   AcademicYear    @relation(fields: [academicYearId], references: [id])
+  billingPeriod  BillingPeriod
+  description    String?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  feePackageItems FeePackageItem[]
+
+  @@unique([academicYearId, level, billingPeriod])
+}
+
+model FeePackageItem {
+  id           String     @id @default(uuid())
+  feePackageId String
+  feePackage   FeePackage @relation(fields: [feePackageId], references: [id], onDelete: Cascade)
+  feeItemId    String
+  feeItem      FeeItem    @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
+  unitAmount   Float?     
+  quantity     Int        @default(1)
+  sortOrder    Int        @default(0)
+
+  @@unique([feePackageId, feeItemId])
 }
