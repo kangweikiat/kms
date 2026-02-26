@@ -5,7 +5,7 @@ import { createFeePackage, updateFeePackage, FeePackageItemInput } from '../acti
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
-import { EnrollmentLevel, BillingPeriod, ProgramType } from '@kms/database'
+import { EnrollmentLevel, BillingPeriod, FeeProgramType } from '@kms/database'
 
 interface FeeItem {
     id: string
@@ -93,7 +93,7 @@ export function PackageForm({ academicYears, feeItems, initialData }: PackageFor
         const data = {
             name: formData.get('name') as string,
             level: formData.get('level') as EnrollmentLevel,
-            programType: formData.get('programType') as ProgramType,
+            programType: formData.get('programType') as FeeProgramType,
             academicYearId: formData.get('academicYearId') as string,
             billingPeriod: formData.get('billingPeriod') as BillingPeriod,
             description: formData.get('description') as string,
@@ -166,7 +166,7 @@ export function PackageForm({ academicYears, feeItems, initialData }: PackageFor
                             className="w-full px-3 py-2 border bg-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                         >
                             <option value="" disabled>Select Program Type</option>
-                            {Object.values(ProgramType).map(pt => (
+                            {Object.values(FeeProgramType).map(pt => (
                                 <option key={pt} value={pt}>{formatProgramType(pt)}</option>
                             ))}
                         </select>

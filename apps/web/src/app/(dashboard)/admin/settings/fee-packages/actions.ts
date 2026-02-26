@@ -1,6 +1,6 @@
 'use server'
 
-import { prisma } from '@kms/database'
+import { prisma, FeeProgramType } from '@kms/database'
 import { revalidatePath } from 'next/cache'
 
 export interface FeePackageItemInput {
@@ -71,7 +71,7 @@ export async function updateFeePackage(
     data: {
         name: string
         level: any
-        programType: any
+        programType: FeeProgramType
         academicYearId: string
         billingPeriod: any
         description?: string

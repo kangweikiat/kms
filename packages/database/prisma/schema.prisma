@@ -130,6 +130,12 @@ enum ProgramType {
   FULL_DAY
 }
 
+enum FeeProgramType {
+  HALF_DAY
+  HALF_DAY_EXTENDED
+  FULL_DAY
+}
+
 model Building {
   id          String   @id @default(uuid())
   name        String   @unique
@@ -237,7 +243,7 @@ model FeePackage {
   id             String          @id @default(uuid())
   name           String
   level          EnrollmentLevel
-  programType    ProgramType     @default(HALF_DAY_MORNING)
+  programType    FeeProgramType  @default(HALF_DAY)
   academicYearId String
   academicYear   AcademicYear    @relation(fields: [academicYearId], references: [id])
   billingPeriod  BillingPeriod

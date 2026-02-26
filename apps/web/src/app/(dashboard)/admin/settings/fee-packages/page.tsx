@@ -1,4 +1,4 @@
-import { prisma, BillingPeriod, EnrollmentLevel, ProgramType } from '@kms/database'
+import { prisma, BillingPeriod, EnrollmentLevel, FeeProgramType } from '@kms/database'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { Plus, Pencil } from 'lucide-react'
@@ -43,7 +43,7 @@ export default async function FeePackagesPage(props: {
         return period.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     }
 
-    const formatProgramType = (pt: ProgramType) => {
+    const formatProgramType = (pt: FeeProgramType) => {
         return pt.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     }
 
