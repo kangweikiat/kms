@@ -10,6 +10,7 @@ type AvailableStudent = {
     id: string
     isNewStudent: boolean
     programType: string
+    transport: boolean
     student: {
         id: string
         name: string
@@ -97,12 +98,6 @@ export function AssignStudentModal({ classId, availableStudents, isFull }: Assig
                                             <div>
                                                 <p className="font-semibold text-gray-900">{enrollment.student.name}</p>
                                                 <div className="mt-1 flex items-center gap-2">
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800 uppercase">
-                                                        {enrollment.student.gender}
-                                                    </span>
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 uppercase">
-                                                        {enrollment.programType.replace(/_/g, ' ')}
-                                                    </span>
                                                     <span
                                                         className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium capitalize ${enrollment.student.race.toLowerCase() === 'malay' ? 'bg-green-100 text-green-800' :
                                                             enrollment.student.race.toLowerCase() === 'chinese' ? 'bg-yellow-100 text-yellow-800' :
@@ -112,10 +107,19 @@ export function AssignStudentModal({ classId, availableStudents, isFull }: Assig
                                                     >
                                                         {enrollment.student.race}
                                                     </span>
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800 uppercase">
+                                                        {enrollment.student.gender}
+                                                    </span>
                                                     <span
                                                         className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${enrollment.isNewStudent ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}
                                                     >
                                                         {enrollment.isNewStudent ? 'New' : 'Old'}
+                                                    </span>
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 uppercase">
+                                                        {enrollment.programType.replace(/_/g, ' ')}
+                                                    </span>
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${enrollment.transport ? 'bg-teal-100 text-teal-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                        {enrollment.transport ? 'Transport' : 'No Transport'}
                                                     </span>
                                                 </div>
                                             </div>
