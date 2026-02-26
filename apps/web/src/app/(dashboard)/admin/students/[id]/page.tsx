@@ -145,10 +145,10 @@ export default async function StudentDetailsPage({
                         </Link>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                         {student.enrollments && student.enrollments.length > 0 ? (
                             student.enrollments.map((enrollment: any) => (
-                                <div key={enrollment.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100 flex flex-col justify-between space-y-3">
+                                <div key={enrollment.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100 flex flex-col gap-3">
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <div className="font-bold text-gray-900 text-base">{enrollment.academicYear}</div>
