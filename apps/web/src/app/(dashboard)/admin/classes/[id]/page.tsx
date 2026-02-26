@@ -191,13 +191,13 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
                                     <div>
                                         <div className="text-xs text-gray-500 mb-1">Race Breakdown</div>
                                         <div className="grid grid-cols-2 gap-2">
-                                            <div className="bg-gray-50 text-gray-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
+                                            <div className="bg-green-50 text-green-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
                                                 <span>Malay:</span> <span>{stats.race.malay}</span>
                                             </div>
-                                            <div className="bg-gray-50 text-gray-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
+                                            <div className="bg-yellow-50 text-yellow-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
                                                 <span>Chinese:</span> <span>{stats.race.chinese}</span>
                                             </div>
-                                            <div className="bg-gray-50 text-gray-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
+                                            <div className="bg-purple-50 text-purple-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
                                                 <span>Indian:</span> <span>{stats.race.indian}</span>
                                             </div>
                                             <div className="bg-gray-50 text-gray-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
