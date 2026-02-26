@@ -129,6 +129,10 @@ export async function deleteClass(id: string) {
 }
 
 export async function assignStudentToClass(classId: string, enrollmentId: string) {
+    return assignStudentsToClass(classId, [enrollmentId])
+}
+
+export async function assignStudentsToClass(classId: string, enrollmentIds: string[]) {
     try {
         // 1. Get class details including active enrollments count to check capacity
         const classData = await prisma.class.findUnique({
@@ -144,46 +148,43 @@ export async function assignStudentToClass(classId: string, enrollmentId: string
             return { error: 'Class not found.' }
         }
 
-        if (classData._count.enrollments >= classData.capacity) {
-            return { error: 'Class has reached maximum capacity.' }
+        if (classData._count.enrollments + enrollmentIds.length > classData.capacity) {
+            return { error: `Cannot assign ${enrollmentIds.length} students. Class only has ${classData.capacity - classData._count.enrollments} spots left.` }
         }
 
         // 2. Get enrollment details to ensure it matches the academic year and is ACTIVE
-        const enrollment = await prisma.enrollment.findUnique({
-            where: { id: enrollmentId }
+        const enrollments = await prisma.enrollment.findMany({
+            where: { id: { in: enrollmentIds } }
         })
 
-        if (!enrollment) {
-            return { error: 'Enrollment not found.' }
+        if (enrollments.length !== enrollmentIds.length) {
+            return { error: 'Some enrollments were not found.' }
         }
 
-        if (enrollment.academicYear !== parseInt(classData.academicYearId)) {
-            // Actually, academicYearId in Class is a UUID, and AcademicYear has 'year' Int field.
-            // I need to fetch the academic year year int to compare or compare UUIDs.
-            // Wait: enrollment.academicYear is Int. Class has academicYearId (UUID).
-            // Let's fetch the academic year associated with the class.
-            const academicYearRecord = await prisma.academicYear.findUnique({
-                where: { id: classData.academicYearId }
-            })
+        const academicYearRecord = await prisma.academicYear.findUnique({
+            where: { id: classData.academicYearId }
+        })
+
+        for (const enrollment of enrollments) {
             if (academicYearRecord?.year !== enrollment.academicYear) {
-                return { error: 'Student enrollment year does not match class year.' }
+                return { error: 'One or more students enrollment year does not match class year.' }
+            }
+
+            if (enrollment.status === 'CANCELLED' || enrollment.status === 'WITHDRAWN') {
+                return { error: 'Cannot assign cancelled or withdrawn enrollments to a class.' }
             }
         }
 
-        if (enrollment.status === 'CANCELLED' || enrollment.status === 'WITHDRAWN') {
-            return { error: 'Cannot assign cancelled or withdrawn enrollments to a class.' }
-        }
-
-        // 3. Update enrollment
-        await prisma.enrollment.update({
-            where: { id: enrollmentId },
+        // 3. Update enrollments
+        await prisma.enrollment.updateMany({
+            where: { id: { in: enrollmentIds } },
             data: { classId }
         })
 
         revalidatePath(`/admin/classes/${classId}`)
         return { success: true }
     } catch (error) {
-        return { error: 'Failed to assign student to class.' }
+        return { error: 'Failed to assign students to class.' }
     }
 }
 

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { assignStudentToClass } from '../../actions'
+import { assignStudentsToClass } from '../../actions'
 import { toast } from 'sonner'
-import { Plus, X, Search, Loader2 } from 'lucide-react'
+import { Plus, X, Search, Loader2, CheckSquare, Square } from 'lucide-react'
 
 // Simple type for the students we pass in
 type AvailableStudent = {
@@ -30,16 +30,39 @@ export function AssignStudentModal({ classId, availableStudents, isFull }: Assig
     const [searchQuery, setSearchQuery] = useState('')
     const [isPending, startTransition] = useTransition()
 
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
     const filteredStudents = availableStudents.filter(s =>
         s.student.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
-    const handleAssign = (enrollmentId: string) => {
+    const toggleStudent = (id: string) => {
+        const newSelected = new Set(selectedIds)
+        if (newSelected.has(id)) {
+            newSelected.delete(id)
+        } else {
+            newSelected.add(id)
+        }
+        setSelectedIds(newSelected)
+    }
+
+    const toggleAll = () => {
+        if (selectedIds.size === filteredStudents.length) {
+            setSelectedIds(new Set())
+        } else {
+            setSelectedIds(new Set(filteredStudents.map(s => s.id)))
+        }
+    }
+
+    const handleAssign = () => {
+        if (selectedIds.size === 0) return
+
         startTransition(async () => {
-            const result = await assignStudentToClass(classId, enrollmentId)
+            const result = await assignStudentsToClass(classId, Array.from(selectedIds))
             if (result.success) {
-                toast.success('Student assigned to class successfully')
+                toast.success(`Successfully assigned ${selectedIds.size} student(s) to class.`)
                 setIsOpen(false)
+                setSelectedIds(new Set())
             } else {
                 toast.error(result.error)
             }
@@ -83,6 +106,23 @@ export function AssignStudentModal({ classId, availableStudents, isFull }: Assig
                             </div>
                         </div>
 
+                        {filteredStudents.length > 0 && (
+                            <div className="px-4 py-2 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedIds.size === filteredStudents.length && filteredStudents.length > 0}
+                                        onChange={toggleAll}
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                                    />
+                                    Select All
+                                </label>
+                                <span className="text-sm text-gray-500">
+                                    {selectedIds.size} selected
+                                </span>
+                            </div>
+                        )}
+
                         <div className="flex-1 overflow-y-auto p-4">
                             {filteredStudents.length === 0 ? (
                                 <p className="text-center text-sm text-gray-500 py-8">
@@ -93,9 +133,18 @@ export function AssignStudentModal({ classId, availableStudents, isFull }: Assig
                                     {filteredStudents.map((enrollment) => (
                                         <li
                                             key={enrollment.id}
-                                            className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:border-blue-100 hover:bg-blue-50/50 transition"
+                                            className={`flex items-center p-3 border rounded-lg transition cursor-pointer ${selectedIds.has(enrollment.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:border-blue-100 hover:bg-gray-50'}`}
+                                            onClick={() => toggleStudent(enrollment.id)}
                                         >
-                                            <div>
+                                            <div className="pr-4">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIds.has(enrollment.id)}
+                                                    onChange={() => { }} // Handled by li onClick
+                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer pointer-events-none"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
                                                 <p className="font-semibold text-gray-900">{enrollment.student.name}</p>
                                                 <div className="mt-1 flex items-center gap-2">
                                                     <span
@@ -123,17 +172,20 @@ export function AssignStudentModal({ classId, availableStudents, isFull }: Assig
                                                     </span>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => handleAssign(enrollment.id)}
-                                                disabled={isPending}
-                                                className="px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition disabled:opacity-50"
-                                            >
-                                                {isPending ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Assign'}
-                                            </button>
                                         </li>
                                     ))}
                                 </ul>
                             )}
+                        </div>
+
+                        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+                            <button
+                                onClick={handleAssign}
+                                disabled={isPending || selectedIds.size === 0}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-medium w-full sm:w-auto justify-center"
+                            >
+                                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Assign Selected'}
+                            </button>
                         </div>
                     </div>
                 </div>
