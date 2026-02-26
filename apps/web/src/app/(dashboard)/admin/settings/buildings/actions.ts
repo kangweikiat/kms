@@ -18,7 +18,7 @@ export async function createBuilding(prevState: any, formData: FormData) {
                 description
             }
         })
-        revalidatePath('/admin/buildings')
+        revalidatePath('/admin/settings/buildings')
         return { success: true }
     } catch (error: any) {
         if (error.code === 'P2002') {
@@ -46,7 +46,7 @@ export async function updateBuilding(id: string, prevState: any, formData: FormD
                 isActive
             }
         })
-        revalidatePath('/admin/buildings')
+        revalidatePath('/admin/settings/buildings')
         return { success: true }
     } catch (error: any) {
         if (error.code === 'P2002') {
@@ -79,7 +79,7 @@ export async function deleteBuilding(id: string) {
         await prisma.building.delete({
             where: { id }
         })
-        revalidatePath('/admin/buildings')
+        revalidatePath('/admin/settings/buildings')
         return { success: true }
     } catch (error) {
         return { error: 'Failed to delete building.' }
@@ -92,7 +92,7 @@ export async function toggleBuildingStatus(id: string, isActive: boolean) {
             where: { id },
             data: { isActive }
         })
-        revalidatePath('/admin/buildings')
+        revalidatePath('/admin/settings/buildings')
         return { success: true }
     } catch (error) {
         return { error: 'Failed to update building status.' }

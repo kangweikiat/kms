@@ -15,7 +15,7 @@ import {
 
 const navigation = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { name: 'Buildings', href: '/admin/buildings', icon: Building },
+
     { name: 'Students', href: '/admin/students', icon: Users },
     { name: 'Classes', href: '/admin/classes', icon: GraduationCap },
     { name: 'Teachers', href: '/admin/teachers', icon: Briefcase },

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Calendar, ChevronRight } from 'lucide-react'
+import { Calendar, ChevronRight, Building } from 'lucide-react'
 
 export default function SettingsPage() {
     return (
@@ -19,6 +19,20 @@ export default function SettingsPage() {
                     </div>
                     <h5 className="mb-2 text-lg font-bold tracking-tight text-gray-900">Academic Years</h5>
                     <p className="font-normal text-gray-700">Manage academic years, activate intakes, and archive old records.</p>
+                </Link>
+
+                <Link
+                    href="/admin/settings/buildings"
+                    className="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-2 bg-indigo-100 rounded-lg">
+                            <Building className="w-6 h-6 text-indigo-600" />
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <h5 className="mb-2 text-lg font-bold tracking-tight text-gray-900">Buildings</h5>
+                    <p className="font-normal text-gray-700">Manage school buildings, branches, and facilities.</p>
                 </Link>
             </div>
         </div>
