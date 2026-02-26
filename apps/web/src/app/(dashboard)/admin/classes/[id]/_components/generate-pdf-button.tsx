@@ -2,8 +2,8 @@
 
 import { Download, Loader2 } from 'lucide-react'
 import { useState } from 'react'
-import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 // @ts-ignore
 export function GeneratePdfButton({ classData, enrollments }) {
@@ -50,8 +50,7 @@ export function GeneratePdfButton({ classData, enrollments }) {
             })
 
             // Generate Table
-            // @ts-ignore - jspdf-autotable attaches to jsPDF instance
-            doc.autoTable({
+            autoTable(doc, {
                 startY: 40,
                 head: [['No.', 'Student Name', 'Gender', 'Race', 'Status', 'Program']],
                 body: tableData,
