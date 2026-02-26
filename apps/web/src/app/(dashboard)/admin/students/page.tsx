@@ -2,6 +2,7 @@ import { prisma } from '@kms/database'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { StatusFilter } from './_components/status-filter'
+import { ClassFilter } from './_components/class-filter'
 import { SearchBar } from './_components/search-bar'
 import { Prisma } from '@kms/database'
 import { StudentTable } from './_components/student-table'
@@ -9,13 +10,14 @@ import { StudentTable } from './_components/student-table'
 import { cookies } from 'next/headers'
 
 export default async function StudentsPage(props: {
-    searchParams: Promise<{ view?: string; q?: string; year?: string; page?: string }>
+    searchParams: Promise<{ view?: string; q?: string; year?: string; page?: string; class?: string }>
 }) {
     const searchParams = await props.searchParams
     const cookieStore = await cookies()
     const view = searchParams.view || 'active'
     const query = searchParams.q || ''
     const year = Number(searchParams.year) || Number(cookieStore.get('admin_year')?.value) || 2026
+    const classFilterVal = searchParams.class
 
     // Pagination defaults
     const currentPage = Number(searchParams.page) || 1
@@ -40,7 +42,8 @@ export default async function StudentsPage(props: {
             enrollments: {
                 some: {
                     academicYear: year,
-                    status: 'ACTIVE'
+                    status: 'ACTIVE',
+                    ...(classFilterVal === 'unassigned' ? { classId: null } : classFilterVal ? { classId: classFilterVal } : {})
                 }
             }
         }
@@ -48,10 +51,17 @@ export default async function StudentsPage(props: {
             enrollments: {
                 some: {
                     academicYear: year,
-                    status: { not: 'ACTIVE' }
+                    status: { not: 'ACTIVE' },
+                    ...(classFilterVal === 'unassigned' ? { classId: null } : classFilterVal ? { classId: classFilterVal } : {})
                 }
             }
         }
+
+    const classesForYear = await prisma.class.findMany({
+        where: { academicYear: { year: year } },
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' }
+    })
 
     const where: Prisma.StudentWhereInput = {
         AND: [
@@ -92,6 +102,7 @@ export default async function StudentsPage(props: {
                     <div className="w-full sm:w-64">
                         <SearchBar />
                     </div>
+                    <ClassFilter classes={classesForYear} currentClass={classFilterVal} />
                     <StatusFilter />
                     <Link
                         href="/admin/students/new"
