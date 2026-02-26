@@ -64,6 +64,7 @@ export async function updateFeeItem(id: string, prevState: any, formData: FormDa
                 name,
                 code,
                 defaultAmount,
+                chargeType,
                 description,
                 isActive
             }
