@@ -8,12 +8,12 @@ import { Plus, X, Search, Loader2 } from 'lucide-react'
 // Simple type for the students we pass in
 type AvailableStudent = {
     id: string
+    isNewStudent: boolean
     student: {
         id: string
         name: string
         gender: string
         race: string
-        createdAt: Date
     }
 }
 
@@ -101,17 +101,17 @@ export function AssignStudentModal({ classId, availableStudents, isFull }: Assig
                                                     </span>
                                                     <span
                                                         className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium capitalize ${enrollment.student.race.toLowerCase() === 'malay' ? 'bg-green-100 text-green-800' :
-                                                                enrollment.student.race.toLowerCase() === 'chinese' ? 'bg-yellow-100 text-yellow-800' :
-                                                                    enrollment.student.race.toLowerCase() === 'indian' ? 'bg-purple-100 text-purple-800' :
-                                                                        'bg-gray-100 text-gray-800'
+                                                            enrollment.student.race.toLowerCase() === 'chinese' ? 'bg-yellow-100 text-yellow-800' :
+                                                                enrollment.student.race.toLowerCase() === 'indian' ? 'bg-purple-100 text-purple-800' :
+                                                                    'bg-gray-100 text-gray-800'
                                                             }`}
                                                     >
                                                         {enrollment.student.race}
                                                     </span>
                                                     <span
-                                                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${new Date(enrollment.student.createdAt).getFullYear() === new Date().getFullYear() ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}
+                                                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${enrollment.isNewStudent ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}
                                                     >
-                                                        {new Date(enrollment.student.createdAt).getFullYear() === new Date().getFullYear() ? 'New' : 'Old'}
+                                                        {enrollment.isNewStudent ? 'New' : 'Old'}
                                                     </span>
                                                 </div>
                                             </div>

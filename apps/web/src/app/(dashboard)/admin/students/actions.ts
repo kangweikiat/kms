@@ -251,7 +251,8 @@ export async function enrollStudent(studentId: string, prevState: any, formData:
         await prisma.enrollment.create({
             data: {
                 ...enrollmentData,
-                studentId
+                studentId,
+                isNewStudent: false
             }
         })
     } catch (error) {

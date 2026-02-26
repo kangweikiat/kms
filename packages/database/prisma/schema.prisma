@@ -96,6 +96,7 @@ model Enrollment {
   transport       Boolean @default(false)
   remarks         String?
   status          EnrollmentStatus @default(ACTIVE)
+  isNewStudent    Boolean @default(true)
 
   classId String?
   class   Class?  @relation(fields: [classId], references: [id])
