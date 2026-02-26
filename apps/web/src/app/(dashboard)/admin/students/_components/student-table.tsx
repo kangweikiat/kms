@@ -7,6 +7,7 @@ import { ProgramBadge } from './program-badge'
 import { DeleteButton } from './delete-button'
 import { ReactivateButton } from './reactivate-button'
 import { HardDeleteButton } from './hard-delete-button'
+import { ClassBadge } from '../../classes/_components/class-badge'
 
 // Define the needed types
 type BaseStudent = {
@@ -187,12 +188,7 @@ export function StudentTable({ students, year }: StudentTableProps) {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-600">
                                             {activeEnrollment?.class ? (
-                                                <Link
-                                                    href={`/admin/classes/${activeEnrollment.class.id}`}
-                                                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition"
-                                                >
-                                                    {activeEnrollment.class.name}
-                                                </Link>
+                                                <ClassBadge classData={activeEnrollment.class} />
                                             ) : (
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 italic">
                                                     Unassigned

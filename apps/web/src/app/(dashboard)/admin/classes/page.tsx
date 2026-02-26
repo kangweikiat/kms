@@ -2,8 +2,9 @@ import { prisma } from '@kms/database'
 import Link from 'next/link'
 import { Plus, Pencil, Users } from 'lucide-react'
 import { cookies } from 'next/headers'
-import { ClassActions } from './_components/class-actions'
 import { BuildingFilter } from './_components/building-filter'
+import { ClassBadge } from './_components/class-badge'
+import { ClassActions } from './_components/class-actions'
 
 export default async function ClassesPage(props: {
     searchParams: Promise<{ year?: string; building?: string }>
@@ -85,7 +86,7 @@ export default async function ClassesPage(props: {
                                     <tr key={cls.id} className="bg-white hover:bg-gray-50 transition">
                                         <td className="px-6 py-4 font-medium text-gray-900">
                                             <div className="flex items-center gap-3">
-                                                <span>{cls.name}</span>
+                                                <ClassBadge classData={{ id: cls.id, name: cls.name }} />
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-gray-600">
