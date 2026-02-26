@@ -22,7 +22,13 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
             enrollments: {
                 where: { status: 'ACTIVE' },
                 include: {
-                    student: true
+                    student: {
+                        include: {
+                            _count: {
+                                select: { enrollments: true }
+                            }
+                        }
+                    }
                 },
                 orderBy: {
                     student: { name: 'asc' }
@@ -56,6 +62,35 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
 
     const usedCapacity = classData.enrollments.length
     const isFull = usedCapacity >= classData.capacity
+
+    // Calculate Statistics
+    const stats = {
+        gender: { male: 0, female: 0 },
+        race: { malay: 0, chinese: 0, indian: 0, others: 0 },
+        program: { fullDay: 0, halfDay: 0 },
+        status: { new: 0, returning: 0 }
+    }
+
+    classData.enrollments.forEach(enrollment => {
+        // Gender
+        if (enrollment.student.gender === 'MALE') stats.gender.male++
+        else stats.gender.female++
+
+        // Race
+        const r = enrollment.student.race?.toLowerCase() || 'others'
+        if (r === 'malay') stats.race.malay++
+        else if (r === 'chinese') stats.race.chinese++
+        else if (r === 'indian') stats.race.indian++
+        else stats.race.others++
+
+        // Program
+        if (enrollment.programType === 'FULL_DAY') stats.program.fullDay++
+        else stats.program.halfDay++
+
+        // Status (If student has only 1 enrollment ever, they are New. Otherwise Returning)
+        if (enrollment.student._count.enrollments === 1) stats.status.new++
+        else stats.status.returning++
+    })
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
@@ -120,7 +155,61 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
                             </div>
                         </dl>
 
-                        <div className="mt-6">
+                        {classData.enrollments.length > 0 && (
+                            <div className="mt-8 space-y-6 pt-6 border-t border-gray-100">
+                                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Class Demographics</h3>
+
+                                <div className="space-y-4">
+                                    {/* Gender */}
+                                    <div>
+                                        <div className="text-xs text-gray-500 mb-1">Gender</div>
+                                        <div className="flex gap-2">
+                                            <div className="flex-1 bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1.5 rounded text-center">Boys: {stats.gender.male}</div>
+                                            <div className="flex-1 bg-pink-50 text-pink-700 text-xs font-medium px-2 py-1.5 rounded text-center">Girls: {stats.gender.female}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Status */}
+                                    <div>
+                                        <div className="text-xs text-gray-500 mb-1">Student Status</div>
+                                        <div className="flex gap-2">
+                                            <div className="flex-1 bg-green-50 text-green-700 text-xs font-medium px-2 py-1.5 rounded text-center">New: {stats.status.new}</div>
+                                            <div className="flex-1 bg-orange-50 text-orange-700 text-xs font-medium px-2 py-1.5 rounded text-center">Returning: {stats.status.returning}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Program */}
+                                    <div>
+                                        <div className="text-xs text-gray-500 mb-1">Program</div>
+                                        <div className="flex gap-2">
+                                            <div className="flex-1 bg-purple-50 text-purple-700 text-xs font-medium px-2 py-1.5 rounded text-center">Full Day: {stats.program.fullDay}</div>
+                                            <div className="flex-1 bg-indigo-50 text-indigo-700 text-xs font-medium px-2 py-1.5 rounded text-center">Half Day: {stats.program.halfDay}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Race Breakdown */}
+                                    <div>
+                                        <div className="text-xs text-gray-500 mb-1">Race Breakdown</div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="bg-gray-50 text-gray-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
+                                                <span>Malay:</span> <span>{stats.race.malay}</span>
+                                            </div>
+                                            <div className="bg-gray-50 text-gray-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
+                                                <span>Chinese:</span> <span>{stats.race.chinese}</span>
+                                            </div>
+                                            <div className="bg-gray-50 text-gray-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
+                                                <span>Indian:</span> <span>{stats.race.indian}</span>
+                                            </div>
+                                            <div className="bg-gray-50 text-gray-700 text-xs font-medium px-2 py-1.5 rounded flex justify-between">
+                                                <span>Others:</span> <span>{stats.race.others}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="mt-8">
                             <AssignStudentModal
                                 classId={classData.id}
                                 availableStudents={unassignedEnrollments}
