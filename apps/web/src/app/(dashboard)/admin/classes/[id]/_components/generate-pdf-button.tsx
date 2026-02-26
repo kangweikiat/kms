@@ -31,7 +31,7 @@ export function GeneratePdfButton({ classData, enrollments }) {
             const tableData = enrollments.map((enrollment: any, index: number) => {
                 const s = enrollment.student
                 // Determine new vs returning
-                const status = (s._count?.enrollments === 1) ? 'New' : 'Returning'
+                const status = enrollment.isNewStudent ? 'New' : 'Returning'
 
                 // Format Program
                 const programClean = enrollment.programType.replace(/_/g, ' ')
@@ -52,7 +52,7 @@ export function GeneratePdfButton({ classData, enrollments }) {
             // Generate Table
             autoTable(doc, {
                 startY: 40,
-                head: [['No.', 'Student Name', 'Gender', 'Race', 'Status', 'Program']],
+                head: [['No', 'Student Name', 'Gender', 'Race', 'Status', 'Program']],
                 body: tableData,
                 theme: 'grid',
                 headStyles: { fillColor: [59, 130, 246] }, // Tailwind blue-500

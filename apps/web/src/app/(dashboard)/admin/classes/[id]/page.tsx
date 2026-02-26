@@ -88,8 +88,8 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
         if (enrollment.programType === 'FULL_DAY') stats.program.fullDay++
         else stats.program.halfDay++
 
-        // Status (If student has only 1 enrollment ever, they are New. Otherwise Returning)
-        if (enrollment.student._count.enrollments === 1) stats.status.new++
+        // Status
+        if (enrollment.isNewStudent) stats.status.new++
         else stats.status.returning++
     })
 
