@@ -63,8 +63,19 @@ export function GeneratePdfButton({ classData, enrollments }) {
                 }
             })
 
-            // Save PDF
-            doc.save(`Class_${classData.name}_${classData.academicYear.year}.pdf`)
+            // Save PDF with bulletproof blob approach
+            const safeName = classData.name.replace(/[^a-zA-Z0-9]/g, '_')
+            const filename = `Class_${safeName}_${classData.academicYear.year}.pdf`
+
+            const blob = doc.output('blob')
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = filename
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+            URL.revokeObjectURL(url)
         } catch (error) {
             console.error('Failed to generate PDF:', error)
             alert('Failed to generate PDF. Please try again.')
