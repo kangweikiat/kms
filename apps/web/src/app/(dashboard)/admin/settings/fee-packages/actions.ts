@@ -13,6 +13,7 @@ export async function createFeePackage(
     data: {
         name: string
         level: any
+        programType: FeeProgramType
         academicYearId: string
         billingPeriod: any
         description?: string
@@ -22,7 +23,7 @@ export async function createFeePackage(
     },
     items: FeePackageItemInput[]
 ) {
-    if (!data.name || !data.level || !data.academicYearId || !data.billingPeriod) {
+    if (!data.name || !data.level || !data.programType || !data.academicYearId || !data.billingPeriod) {
         return { error: 'Please fill in all required package fields.' }
     }
 
@@ -33,7 +34,13 @@ export async function createFeePackage(
     try {
         await prisma.feePackage.create({
             data: {
-                ...data,
+                name: data.name,
+                level: data.level,
+                programType: data.programType,
+                academicYearId: data.academicYearId,
+                billingPeriod: data.billingPeriod,
+                description: data.description,
+                isActive: data.isActive,
                 feePackageItems: {
                     create: items.map((item, index) => ({
                         feeItemId: item.feeItemId,
