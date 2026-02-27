@@ -42,18 +42,20 @@ export async function getFeePreviewData(enrollmentId: string) {
         pkg.feePackageItems.forEach(item => {
             const isMonthly = item.feeItem.chargeType === 'MONTHLY'
             const defaultAmount = item.unitAmount ?? item.feeItem.defaultAmount
-            const quantity = item.quantity
-            let lineCost = defaultAmount * quantity
 
             // Check if there is an explicit database adjustment
             const dbAdjustment = enrollment.feeAdjustments.find(a => a.feeItemId === item.feeItem.id)
+
+            const quantity = dbAdjustment?.quantity ?? item.quantity
+            let lineCost = defaultAmount * quantity
+
             let isAdjusted = false
             let adjustmentAmount = 0
             let adjustmentReason = ''
             let isWaiver = false
 
             if (dbAdjustment) {
-                isAdjusted = true
+                isAdjusted = true // Even if amount is 0, quantity might be customized
                 adjustmentAmount = dbAdjustment.amount
                 adjustmentReason = dbAdjustment.reason || 'Custom Adjustment'
                 isWaiver = false // It's a manual adjustment
@@ -110,7 +112,7 @@ export async function getFeePreviewData(enrollmentId: string) {
     }
 }
 
-export async function upsertFeeAdjustment(enrollmentId: string, feeItemId: string, amount: number, reason: string, studentId: string) {
+export async function upsertFeeAdjustment(enrollmentId: string, feeItemId: string, amount: number, reason: string, studentId: string, quantity: number | null = null) {
     try {
         await prisma.enrollmentFeeAdjustment.upsert({
             where: {
@@ -121,13 +123,15 @@ export async function upsertFeeAdjustment(enrollmentId: string, feeItemId: strin
             },
             update: {
                 amount,
-                reason
+                reason,
+                quantity
             },
             create: {
                 enrollmentId,
                 feeItemId,
                 amount,
-                reason
+                reason,
+                quantity
             }
         })
 

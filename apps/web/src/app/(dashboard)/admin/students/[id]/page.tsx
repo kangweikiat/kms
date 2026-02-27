@@ -220,31 +220,41 @@ export default async function StudentDetailsPage({
                                                 {enrollment.languageClass || '-'}
                                             </span>
                                         </div>
-                                        <div className="flex justify-between text-sm items-center pt-2">
-                                            <span className="text-gray-500 font-medium pt-1">Fee Package</span>
-                                            {enrollment.feePackageId ? (
-                                                <div className="flex flex-col items-end">
-                                                    <span className="font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200">
+                                    </div> {/* End of Key-Value List */}
+
+                                    {/* Fee Configuration Section */}
+                                    <div className="mt-1 pt-3 border-t border-gray-200/60">
+                                        <div className="flex items-center justify-between text-sm mb-2">
+                                            <span className="font-semibold text-gray-900">Fee Configuration</span>
+                                        </div>
+
+                                        {enrollment.feePackageId ? (
+                                            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="font-medium text-gray-900 text-sm">
                                                         {feePackages.find(p => p.id === enrollment.feePackageId)?.name || 'Assigned'}
                                                     </span>
-                                                    <span className="text-xs text-gray-400 mt-1">
+                                                    <span className="text-xs text-gray-500">
                                                         Assigned {enrollment.feePackageAssignedAt ? new Date(enrollment.feePackageAssignedAt).toLocaleDateString() : ''}
                                                     </span>
-                                                    <div className="mt-3 flex items-center gap-2 justify-end">
-                                                        <FeePreviewModule
-                                                            enrollmentId={enrollment.id}
-                                                            studentId={student.id}
-                                                            feePackageName={feePackages.find(p => p.id === enrollment.feePackageId)?.name}
-                                                        />
-                                                        <AssignFeeModal
-                                                            enrollmentId={enrollment.id}
-                                                            studentId={student.id}
-                                                            isNewStudent={enrollment.isNewStudent}
-                                                            availablePackages={feePackages.filter(p => p.academicYearId === enrollment.class?.academicYearId || p.level === enrollment.enrollmentLevel)}
-                                                        />
-                                                    </div>
                                                 </div>
-                                            ) : (
+                                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                                    <FeePreviewModule
+                                                        enrollmentId={enrollment.id}
+                                                        studentId={student.id}
+                                                        feePackageName={feePackages.find(p => p.id === enrollment.feePackageId)?.name}
+                                                    />
+                                                    <AssignFeeModal
+                                                        enrollmentId={enrollment.id}
+                                                        studentId={student.id}
+                                                        isNewStudent={enrollment.isNewStudent}
+                                                        availablePackages={feePackages.filter(p => p.academicYearId === enrollment.class?.academicYearId || p.level === enrollment.enrollmentLevel)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                <span className="text-sm font-medium text-amber-800">No fee package assigned</span>
                                                 <AssignFeeModal
                                                     enrollmentId={enrollment.id}
                                                     studentId={student.id}
@@ -255,8 +265,8 @@ export default async function StudentDetailsPage({
                                                             p.programType === 'HALF_DAY' && (enrollment.programType === 'HALF_DAY_MORNING' || enrollment.programType === 'HALF_DAY_AFTERNOON'))
                                                     )}
                                                 />
-                                            )}
-                                        </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {enrollment.remarks && (

@@ -21,6 +21,7 @@ export function FeePreviewModule({ enrollmentId, studentId, feePackageName }: Fe
     const [adjustingItemId, setAdjustingItemId] = useState<string | null>(null)
     const [adjustAmount, setAdjustAmount] = useState<string>('')
     const [adjustReason, setAdjustReason] = useState<string>('')
+    const [adjustQuantity, setAdjustQuantity] = useState<string>('')
     const [submitting, setSubmitting] = useState(false)
 
     const fetchData = async () => {
@@ -42,14 +43,17 @@ export function FeePreviewModule({ enrollmentId, studentId, feePackageName }: Fe
     }, [open, enrollmentId])
 
     const handleSaveAdjustment = async (feeItemId: string) => {
-        if (!adjustAmount || isNaN(Number(adjustAmount))) return
+        if (adjustAmount === '' || isNaN(Number(adjustAmount))) return
+        if (adjustQuantity === '' || isNaN(Number(adjustQuantity))) return
         setSubmitting(true)
         const amount = Number(adjustAmount)
-        const res = await upsertFeeAdjustment(enrollmentId, feeItemId, amount, adjustReason, studentId)
+        const quantity = Number(adjustQuantity)
+        const res = await upsertFeeAdjustment(enrollmentId, feeItemId, amount, adjustReason, studentId, quantity)
         if (res.success) {
             setAdjustingItemId(null)
             setAdjustAmount('')
             setAdjustReason('')
+            setAdjustQuantity('')
             await fetchData()
         } else {
             alert(res.error)
@@ -154,6 +158,8 @@ export function FeePreviewModule({ enrollmentId, studentId, feePackageName }: Fe
                                                         setAdjustAmount={setAdjustAmount}
                                                         adjustReason={adjustReason}
                                                         setAdjustReason={setAdjustReason}
+                                                        adjustQuantity={adjustQuantity}
+                                                        setAdjustQuantity={setAdjustQuantity}
                                                         handleSaveAdjustment={handleSaveAdjustment}
                                                         handleRemoveAdjustment={handleRemoveAdjustment}
                                                         submitting={submitting}
@@ -180,6 +186,8 @@ export function FeePreviewModule({ enrollmentId, studentId, feePackageName }: Fe
                                                         setAdjustAmount={setAdjustAmount}
                                                         adjustReason={adjustReason}
                                                         setAdjustReason={setAdjustReason}
+                                                        adjustQuantity={adjustQuantity}
+                                                        setAdjustQuantity={setAdjustQuantity}
                                                         handleSaveAdjustment={handleSaveAdjustment}
                                                         handleRemoveAdjustment={handleRemoveAdjustment}
                                                         submitting={submitting}
@@ -199,7 +207,7 @@ export function FeePreviewModule({ enrollmentId, studentId, feePackageName }: Fe
     )
 }
 
-function FeeItemRow({ item, adjustingItemId, setAdjustingItemId, adjustAmount, setAdjustAmount, adjustReason, setAdjustReason, handleSaveAdjustment, handleRemoveAdjustment, submitting, isMonthly = false }: any) {
+function FeeItemRow({ item, adjustingItemId, setAdjustingItemId, adjustAmount, setAdjustAmount, adjustReason, setAdjustReason, adjustQuantity, setAdjustQuantity, handleSaveAdjustment, handleRemoveAdjustment, submitting, isMonthly = false }: any) {
     const isEditing = adjustingItemId === item.feeItemId
 
     return (
@@ -238,7 +246,8 @@ function FeeItemRow({ item, adjustingItemId, setAdjustingItemId, adjustAmount, s
                         <button
                             onClick={() => {
                                 setAdjustingItemId(item.feeItemId)
-                                setAdjustAmount(item.dbAdjustmentId ? String(item.adjustmentAmount) : '')
+                                setAdjustAmount(item.dbAdjustmentId ? String(item.adjustmentAmount) : '0')
+                                setAdjustQuantity(String(item.quantity))
                                 setAdjustReason(item.dbAdjustmentId ? item.adjustmentReason : '')
                             }}
                             className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition"
@@ -251,40 +260,53 @@ function FeeItemRow({ item, adjustingItemId, setAdjustingItemId, adjustAmount, s
 
             {/* Edit Form */}
             {isEditing && (
-                <div className="mt-3 pt-3 border-t border-gray-100 bg-gray-50 -mx-3 -mb-3 p-3 rounded-b-lg flex flex-col sm:flex-row gap-3 items-end">
-                    <div className="flex-1 w-full space-y-1">
-                        <label className="text-xs font-medium text-gray-600">Adjustment Amount (RM)</label>
-                        <input
-                            type="number"
-                            value={adjustAmount}
-                            onChange={(e) => setAdjustAmount(e.target.value)}
-                            placeholder="-50.00"
-                            className="w-full text-sm border rounded-md px-2 py-1.5 focus:ring-1 focus:ring-blue-500 outline-none"
-                        />
-                        <p className="text-[10px] text-gray-500">Use negative numbers for discounts.</p>
+                <div className="mt-3 pt-4 border-t border-gray-100 bg-blue-50/30 -mx-3 -mb-3 p-4 rounded-b-lg">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-4">
+                        <div className="sm:col-span-3 space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-700">Quantity</label>
+                            <input
+                                type="number"
+                                value={adjustQuantity}
+                                onChange={(e) => setAdjustQuantity(e.target.value)}
+                                min="0"
+                                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white transition-all shadow-sm"
+                            />
+                        </div>
+                        <div className="sm:col-span-4 space-y-1.5 flex flex-col justify-start">
+                            <label className="text-xs font-semibold text-gray-700">Adjustment (RM)</label>
+                            <input
+                                type="number"
+                                value={adjustAmount}
+                                onChange={(e) => setAdjustAmount(e.target.value)}
+                                placeholder="-50.00"
+                                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white transition-all shadow-sm"
+                            />
+                            <p className="text-[10px] text-gray-500 pt-0.5">Negative for discounts.</p>
+                        </div>
+                        <div className="sm:col-span-5 space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-700">Reason</label>
+                            <input
+                                type="text"
+                                value={adjustReason}
+                                onChange={(e) => setAdjustReason(e.target.value)}
+                                placeholder="e.g. Sibling Discount"
+                                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white transition-all shadow-sm"
+                            />
+                        </div>
                     </div>
-                    <div className="flex-[2] w-full space-y-1">
-                        <label className="text-xs font-medium text-gray-600">Reason</label>
-                        <input
-                            type="text"
-                            value={adjustReason}
-                            onChange={(e) => setAdjustReason(e.target.value)}
-                            placeholder="e.g. Sibling Discount"
-                            className="w-full text-sm border rounded-md px-2 py-1.5 focus:ring-1 focus:ring-blue-500 outline-none"
-                        />
-                    </div>
-                    <div className="flex gap-2 w-full sm:w-auto pb-1 sm:pb-0">
+
+                    <div className="flex justify-end gap-2 pt-3 border-t border-gray-200/60 mt-1">
                         <button
                             onClick={() => setAdjustingItemId(null)}
                             disabled={submitting}
-                            className="flex-1 sm:flex-none px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                            className="px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={() => handleSaveAdjustment(item.feeItemId)}
-                            disabled={submitting || !adjustAmount}
-                            className="flex-1 sm:flex-none px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                            disabled={submitting || adjustAmount === '' || adjustQuantity === ''}
+                            className="px-5 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
                         >
                             Save
                         </button>

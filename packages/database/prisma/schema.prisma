@@ -311,6 +311,7 @@ model EnrollmentFeeAdjustment {
 
   amount       Float      // The amount to discount/waive from the standard cost
   reason       String?    // e.g., "Siblings discount", "Registration waived for returning student"
+  quantity     Int?       // Override the default item quantity for this specific enrollment
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
