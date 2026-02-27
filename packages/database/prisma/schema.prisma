@@ -109,6 +109,11 @@ model Enrollment {
   feePackageAssignedAt DateTime?
   feeAdjustments       EnrollmentFeeAdjustment[]
 
+  payments             Payment[]
+  monthlyFeeInstances  MonthlyFeeInstance[]
+  bookInstances        BookInstance[]
+  miscFees             MiscFee[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -253,6 +258,8 @@ model FeeItem {
 
   feePackageItems       FeePackageItem[]
   enrollmentAdjustments EnrollmentFeeAdjustment[]
+  monthlyFeeInstances   MonthlyFeeInstance[]
+  bookInstances         BookInstance[]
 }
 
 model FeePackage {
@@ -317,4 +324,84 @@ model EnrollmentFeeAdjustment {
   updatedAt    DateTime @updatedAt
 
   @@unique([enrollmentId, feeItemId])
+}
+
+enum PaymentMethodEnum {
+  CASH
+  BANK_TRANSFER
+  ONLINE
+}
+
+enum PaymentStatusEnum {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+model Payment {
+  id           String   @id @default(uuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  amountPaid   Float
+  method       PaymentMethodEnum
+  paidAt       DateTime
+  note         String?
+
+  monthlyFeeInstanceId String?
+  monthlyFeeInstance   MonthlyFeeInstance? @relation(fields: [monthlyFeeInstanceId], references: [id], onDelete: SetNull)
+
+  bookInstanceId String?
+  bookInstance   BookInstance? @relation(fields: [bookInstanceId], references: [id], onDelete: SetNull)
+
+  miscFeeId String?
+  miscFee   MiscFee? @relation(fields: [miscFeeId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+}
+
+model MonthlyFeeInstance {
+  id           String   @id @default(uuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  
+  feeItemId    String
+  feeItem      FeeItem  @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
+  
+  month        Int      // 1 = Jan, 2 = Feb, ...
+  status       PaymentStatusEnum @default(UNPAID)
+  amountDue    Float    // Snapshotted price after any adjustments
+
+  payments     Payment[]
+
+  @@unique([enrollmentId, feeItemId, month])
+}
+
+model BookInstance {
+  id           String   @id @default(uuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  
+  feeItemId    String
+  feeItem      FeeItem  @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
+  
+  version      String   // e.g., "1A", "1B", "12"
+  status       PaymentStatusEnum @default(UNPAID)
+  amountDue    Float
+
+  payments     Payment[]
+
+  @@unique([enrollmentId, feeItemId, version])
+}
+
+model MiscFee {
+  id           String   @id @default(uuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  
+  name         String
+  amountDue    Float
+  status       PaymentStatusEnum @default(UNPAID)
+
+  payments     Payment[]
 }

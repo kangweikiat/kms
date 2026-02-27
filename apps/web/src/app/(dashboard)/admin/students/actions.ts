@@ -3,6 +3,7 @@
 import { prisma, EnrollmentLevel, ProgramType, EnrollmentStatus, LanguageClass } from '@kms/database'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { generateInstancesForEnrollment } from '../payments/actions'
 
 function determineProgramType(formData: FormData): ProgramType {
     const category = formData.get('programCategory') as string
@@ -307,13 +308,22 @@ export async function assignFeePackage(enrollmentId: string, feePackageId: strin
             where: { enrollmentId }
         });
 
+        // Also wipe any old instances linked directly to the enrollment so we can regenerate them fresh
+        await prisma.monthlyFeeInstance.deleteMany({ where: { enrollmentId } });
+        await prisma.bookInstance.deleteMany({ where: { enrollmentId } });
+        await prisma.miscFee.deleteMany({ where: { enrollmentId } });
+
         await prisma.enrollment.update({
             where: { id: enrollmentId },
             data: {
                 feePackageId,
                 feePackageAssignedAt: new Date(),
             }
-        })
+        });
+
+        // Autogenerate payment tracking instances once assigned
+        await generateInstancesForEnrollment(enrollmentId);
+
         revalidatePath(`/admin/students/${studentId}`)
         return { success: true }
     } catch (error) {
