@@ -104,6 +104,11 @@ model Enrollment {
   startDate     DateTime       @default(now())
   languageClass LanguageClass? 
 
+  feePackageId         String?
+  feePackage           FeePackage? @relation(fields: [feePackageId], references: [id])
+  feePackageAssignedAt DateTime?
+  feeAdjustments       EnrollmentFeeAdjustment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -235,17 +240,19 @@ enum ChargeType {
 }
 
 model FeeItem {
-  id            String           @id @default(uuid())
-  name          String
-  code          String           @unique
-  defaultAmount Float
-  chargeType    ChargeType       @default(ONE_TIME)
-  description   String?
-  isActive      Boolean          @default(true)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id                             String           @id @default(uuid())
+  name                           String
+  code                           String           @unique
+  defaultAmount                  Float
+  chargeType                     ChargeType       @default(ONE_TIME)
+  description                    String?
+  isActive                       Boolean          @default(true)
+  isWaivableForReturningStudents Boolean          @default(false)
+  createdAt                      DateTime         @default(now())
+  updatedAt                      DateTime         @updatedAt
 
-  feePackageItems FeePackageItem[]
+  feePackageItems       FeePackageItem[]
+  enrollmentAdjustments EnrollmentFeeAdjustment[]
 }
 
 model FeePackage {
@@ -263,6 +270,7 @@ model FeePackage {
 
   feePackageItems FeePackageItem[]
   collectionRule  CollectionRule?
+  enrollments     Enrollment[]
 
   @@unique([academicYearId, level, programType, billingPeriod])
 }
@@ -291,4 +299,21 @@ model CollectionRule {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model EnrollmentFeeAdjustment {
+  id           String     @id @default(uuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  
+  feeItemId    String
+  feeItem      FeeItem    @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
+
+  amount       Float      // The amount to discount/waive from the standard cost
+  reason       String?    // e.g., "Siblings discount", "Registration waived for returning student"
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([enrollmentId, feeItemId])
 }

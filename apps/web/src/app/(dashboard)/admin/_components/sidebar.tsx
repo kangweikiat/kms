@@ -10,16 +10,17 @@ import {
     CreditCard,
     FileText,
     Settings,
-    Building
+    Building,
+    Banknote
 } from 'lucide-react'
 
 const navigation = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-
     { name: 'Students', href: '/admin/students', icon: Users },
     { name: 'Classes', href: '/admin/classes', icon: GraduationCap },
     { name: 'Teachers', href: '/admin/teachers', icon: Briefcase },
     { name: 'Payments', href: '/admin/payments', icon: CreditCard },
+    { name: 'Fee Packages', href: '/admin/fee-packages', icon: Banknote },
     { name: 'Reports', href: '/admin/reports', icon: FileText },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
 ]

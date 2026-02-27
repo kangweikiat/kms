@@ -8,6 +8,8 @@ import { DeleteButton } from '../_components/delete-button'
 import { ReactivateButton } from '../_components/reactivate-button'
 import { HardDeleteButton } from '../_components/hard-delete-button'
 import { LevelBadge } from '../_components/level-badge'
+import { AssignFeeModal } from './_components/assign-fee-modal'
+import { FeePreviewModule } from './_components/fee-preview-module'
 
 export default async function StudentDetailsPage({
     params,
@@ -39,6 +41,20 @@ export default async function StudentDetailsPage({
                     user: true
                 }
             }
+        }
+    })
+
+    const feePackages = await prisma.feePackage.findMany({
+        where: {
+            isActive: true,
+        },
+        include: {
+            feePackageItems: {
+                include: {
+                    feeItem: true
+                }
+            },
+            collectionRule: true
         }
     })
 
@@ -191,18 +207,55 @@ export default async function StudentDetailsPage({
                                         <div className="flex justify-between text-sm items-center">
                                             <span className="text-gray-500">Language</span>
                                             <span className={`font-medium ${(() => {
-                                                    const race = student.race.toUpperCase();
-                                                    const lang = enrollment.languageClass;
-                                                    if (!lang) return 'text-gray-900';
-                                                    const isDefault = (race === 'CHINESE' && lang === 'MANDARIN') ||
-                                                        (race === 'MALAY' && lang === 'JAWI') ||
-                                                        (race === 'INDIAN' && lang === 'TAMIL');
-                                                    // Highlight non-default language choices
-                                                    return isDefault ? 'text-gray-900' : 'text-blue-700 font-bold bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200';
-                                                })()
+                                                const race = student.race.toUpperCase();
+                                                const lang = enrollment.languageClass;
+                                                if (!lang) return 'text-gray-900';
+                                                const isDefault = (race === 'CHINESE' && lang === 'MANDARIN') ||
+                                                    (race === 'MALAY' && lang === 'JAWI') ||
+                                                    (race === 'INDIAN' && lang === 'TAMIL');
+                                                // Highlight non-default language choices
+                                                return isDefault ? 'text-gray-900' : 'text-blue-700 font-bold bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200';
+                                            })()
                                                 }`}>
                                                 {enrollment.languageClass || '-'}
                                             </span>
+                                        </div>
+                                        <div className="flex justify-between text-sm items-center pt-2">
+                                            <span className="text-gray-500 font-medium pt-1">Fee Package</span>
+                                            {enrollment.feePackageId ? (
+                                                <div className="flex flex-col items-end">
+                                                    <span className="font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200">
+                                                        {feePackages.find(p => p.id === enrollment.feePackageId)?.name || 'Assigned'}
+                                                    </span>
+                                                    <span className="text-xs text-gray-400 mt-1">
+                                                        Assigned {enrollment.feePackageAssignedAt ? new Date(enrollment.feePackageAssignedAt).toLocaleDateString() : ''}
+                                                    </span>
+                                                    <div className="mt-3 flex items-center gap-2 justify-end">
+                                                        <FeePreviewModule
+                                                            enrollmentId={enrollment.id}
+                                                            studentId={student.id}
+                                                            feePackageName={feePackages.find(p => p.id === enrollment.feePackageId)?.name}
+                                                        />
+                                                        <AssignFeeModal
+                                                            enrollmentId={enrollment.id}
+                                                            studentId={student.id}
+                                                            isNewStudent={enrollment.isNewStudent}
+                                                            availablePackages={feePackages.filter(p => p.academicYearId === enrollment.class?.academicYearId || p.level === enrollment.enrollmentLevel)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <AssignFeeModal
+                                                    enrollmentId={enrollment.id}
+                                                    studentId={student.id}
+                                                    isNewStudent={enrollment.isNewStudent}
+                                                    availablePackages={feePackages.filter(p => p.level === enrollment.enrollmentLevel &&
+                                                        (p.programType === 'FULL_DAY' && enrollment.programType === 'FULL_DAY' ||
+                                                            p.programType === 'HALF_DAY_EXTENDED' && (enrollment.programType === 'MORNING_STAY_BACK' || enrollment.programType === 'AFTERNOON_STAY_BACK') ||
+                                                            p.programType === 'HALF_DAY' && (enrollment.programType === 'HALF_DAY_MORNING' || enrollment.programType === 'HALF_DAY_AFTERNOON'))
+                                                    )}
+                                                />
+                                            )}
                                         </div>
                                     </div>
 
