@@ -4,7 +4,7 @@ import { useState, useActionState } from 'react'
 import { createStudent, updateStudent } from '../../actions'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { Student, Enrollment } from '@kms/database'
+import { Student, Enrollment, LanguageClass } from '@kms/database'
 
 interface StudentFormProps {
     // @ts-ignore
@@ -179,6 +179,34 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                         placeholder="Any additional information about the student..."
                     />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Start Date</label>
+                        <input
+                            type="date"
+                            name="startDate"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            defaultValue={currentEnrollment?.startDate ? new Date(currentEnrollment.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                        />
+                        <p className="text-xs text-gray-500">Only needed if joining mid-year.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Language Class</label>
+                        <select
+                            name="languageClass"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            defaultValue={currentEnrollment?.languageClass || 'DEFAULT'}
+                        >
+                            <option value="DEFAULT">Default (Based on Race)</option>
+                            <option value="MANDARIN">Mandarin</option>
+                            <option value="JAWI">Jawi</option>
+                            <option value="TAMIL">Tamil</option>
+                        </select>
+                        <p className="text-xs text-gray-500">Optional: Override default language class.</p>
+                    </div>
                 </div>
 
                 {/* Dynamic Program Type Selection */}

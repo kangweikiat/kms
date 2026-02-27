@@ -68,6 +68,34 @@ export function EnrollmentForm({ studentId, studentName, availableYears = [] }: 
                         />
                     </div>
 
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700">Start Date</label>
+                            <input
+                                type="date"
+                                name="startDate"
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                defaultValue={new Date().toISOString().split('T')[0]}
+                            />
+                            <p className="text-xs text-gray-500">Only needed if joining mid-year.</p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700">Language Class</label>
+                            <select
+                                name="languageClass"
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                defaultValue="DEFAULT"
+                            >
+                                <option value="DEFAULT">Default (Based on Race)</option>
+                                <option value="MANDARIN">Mandarin</option>
+                                <option value="JAWI">Jawi</option>
+                                <option value="TAMIL">Tamil</option>
+                            </select>
+                            <p className="text-xs text-gray-500">Optional: Override default language class.</p>
+                        </div>
+                    </div>
+
                     {/* Dynamic Program Type Selection */}
                     <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <div className="space-y-2">

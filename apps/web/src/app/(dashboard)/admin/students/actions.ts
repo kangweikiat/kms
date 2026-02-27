@@ -1,6 +1,6 @@
 'use server'
 
-import { prisma, EnrollmentLevel, ProgramType, EnrollmentStatus } from '@kms/database'
+import { prisma, EnrollmentLevel, ProgramType, EnrollmentStatus, LanguageClass } from '@kms/database'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -51,6 +51,14 @@ function extractStudentData(formData: FormData) {
 }
 
 function extractEnrollmentData(formData: FormData) {
+    const rawStartDate = formData.get('startDate') as string
+    const startDate = rawStartDate ? new Date(rawStartDate) : new Date()
+
+    const rawLanguage = formData.get('languageClass') as string
+    const languageClass = rawLanguage && rawLanguage !== 'DEFAULT'
+        ? (rawLanguage as LanguageClass)
+        : null
+
     return {
         academicYear: Number(formData.get('enrollmentYear')),
         enrollmentLevel: formData.get('enrollmentLevel') as EnrollmentLevel,
@@ -58,6 +66,8 @@ function extractEnrollmentData(formData: FormData) {
         programType: determineProgramType(formData),
         remarks: formData.get('remarks') as string,
         status: EnrollmentStatus.ACTIVE,
+        startDate,
+        languageClass,
     }
 }
 

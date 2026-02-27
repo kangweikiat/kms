@@ -101,10 +101,19 @@ model Enrollment {
   classId String?
   class   Class?  @relation(fields: [classId], references: [id])
 
+  startDate     DateTime       @default(now())
+  languageClass LanguageClass? 
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([studentId, academicYear])
+}
+
+enum LanguageClass {
+  MANDARIN
+  JAWI
+  TAMIL
 }
 
 enum EnrollmentStatus {
