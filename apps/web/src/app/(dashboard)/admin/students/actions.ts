@@ -1,6 +1,6 @@
 'use server'
 
-import { prisma, EnrollmentLevel, ProgramType, EnrollmentStatus } from '@kms/database'
+import { prisma, EnrollmentLevel, ProgramType, EnrollmentStatus, LanguageClass } from '@kms/database'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -51,6 +51,21 @@ function extractStudentData(formData: FormData) {
 }
 
 function extractEnrollmentData(formData: FormData) {
+    const rawStartDate = formData.get('startDate') as string
+    const startDate = rawStartDate ? new Date(rawStartDate) : new Date()
+
+    const rawLanguage = formData.get('languageClass') as string
+    let languageClass: LanguageClass | null = null
+
+    if (rawLanguage && rawLanguage !== 'DEFAULT') {
+        languageClass = rawLanguage as LanguageClass
+    } else {
+        const race = (formData.get('race') as string)?.toUpperCase()
+        if (race === 'CHINESE') languageClass = LanguageClass.MANDARIN
+        else if (race === 'MALAY') languageClass = LanguageClass.JAWI
+        else if (race === 'INDIAN') languageClass = LanguageClass.TAMIL
+    }
+
     return {
         academicYear: Number(formData.get('enrollmentYear')),
         enrollmentLevel: formData.get('enrollmentLevel') as EnrollmentLevel,
@@ -58,6 +73,8 @@ function extractEnrollmentData(formData: FormData) {
         programType: determineProgramType(formData),
         remarks: formData.get('remarks') as string,
         status: EnrollmentStatus.ACTIVE,
+        startDate,
+        languageClass,
     }
 }
 
@@ -202,6 +219,13 @@ export async function hardDeleteStudent(id: string, year: number) {
             return { message: 'Enrollment not found or not in a withdrawable state.' };
         }
 
+        // 1.5 Delete the fee adjustments associated with this enrollment
+        await prisma.enrollmentFeeAdjustment.deleteMany({
+            where: {
+                enrollmentId: enrollment.id
+            }
+        });
+
         // 1. Delete the specific enrollment
         await prisma.enrollment.delete({
             where: {
@@ -274,4 +298,26 @@ export async function enrollStudent(studentId: string, prevState: any, formData:
 
     revalidatePath(`/admin/students/${studentId}`)
     redirect(`/admin/students/${studentId}`)
+}
+
+export async function assignFeePackage(enrollmentId: string, feePackageId: string, studentId: string) {
+    try {
+        // First delete any previous fee adjustments since we are assigning a new package
+        await prisma.enrollmentFeeAdjustment.deleteMany({
+            where: { enrollmentId }
+        });
+
+        await prisma.enrollment.update({
+            where: { id: enrollmentId },
+            data: {
+                feePackageId,
+                feePackageAssignedAt: new Date(),
+            }
+        })
+        revalidatePath(`/admin/students/${studentId}`)
+        return { success: true }
+    } catch (error) {
+        console.error('Failed to assign fee package:', error)
+        return { error: 'Failed to assign fee package. Please try again.' }
+    }
 }

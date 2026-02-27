@@ -101,10 +101,24 @@ model Enrollment {
   classId String?
   class   Class?  @relation(fields: [classId], references: [id])
 
+  startDate     DateTime       @default(now())
+  languageClass LanguageClass? 
+
+  feePackageId         String?
+  feePackage           FeePackage? @relation(fields: [feePackageId], references: [id])
+  feePackageAssignedAt DateTime?
+  feeAdjustments       EnrollmentFeeAdjustment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([studentId, academicYear])
+}
+
+enum LanguageClass {
+  MANDARIN
+  JAWI
+  TAMIL
 }
 
 enum EnrollmentStatus {
@@ -127,6 +141,12 @@ enum ProgramType {
   HALF_DAY_AFTERNOON
   MORNING_STAY_BACK
   AFTERNOON_STAY_BACK
+  FULL_DAY
+}
+
+enum FeeProgramType {
+  HALF_DAY
+  HALF_DAY_EXTENDED
   FULL_DAY
 }
 
@@ -194,9 +214,10 @@ model AcademicYear {
   id        String             @id @default(uuid())
   year      Int                @unique
   status    AcademicYearStatus @default(INACTIVE)
-  startDate DateTime?
+  startDate   DateTime?
   endDate   DateTime?
   classes   Class[]
+  feePackages FeePackage[]
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 }
@@ -205,4 +226,95 @@ enum AcademicYearStatus {
   ACTIVE
   COMPLETED
   INACTIVE
+}
+
+enum BillingPeriod {
+  YEARLY
+  FIRST_HALF_YEAR
+  SECOND_HALF_YEAR
+}
+
+enum ChargeType {
+  ONE_TIME
+  MONTHLY
+}
+
+model FeeItem {
+  id                             String           @id @default(uuid())
+  name                           String
+  code                           String           @unique
+  defaultAmount                  Float
+  chargeType                     ChargeType       @default(ONE_TIME)
+  description                    String?
+  isActive                       Boolean          @default(true)
+  isWaivableForReturningStudents Boolean          @default(false)
+  createdAt                      DateTime         @default(now())
+  updatedAt                      DateTime         @updatedAt
+
+  feePackageItems       FeePackageItem[]
+  enrollmentAdjustments EnrollmentFeeAdjustment[]
+}
+
+model FeePackage {
+  id             String          @id @default(uuid())
+  name           String
+  level          EnrollmentLevel
+  programType    FeeProgramType  @default(HALF_DAY)
+  academicYearId String
+  academicYear   AcademicYear    @relation(fields: [academicYearId], references: [id])
+  billingPeriod  BillingPeriod
+  description    String?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  feePackageItems FeePackageItem[]
+  collectionRule  CollectionRule?
+  enrollments     Enrollment[]
+
+  @@unique([academicYearId, level, programType, billingPeriod])
+}
+
+model FeePackageItem {
+  id           String     @id @default(uuid())
+  feePackageId String
+  feePackage   FeePackage @relation(fields: [feePackageId], references: [id], onDelete: Cascade)
+  feeItemId    String
+  feeItem      FeeItem    @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
+  unitAmount   Float?     
+  quantity     Int        @default(1)
+  sortOrder    Int        @default(0)
+
+  @@unique([feePackageId, feeItemId])
+}
+
+model CollectionRule {
+  id                  String     @id @default(uuid())
+  feePackageId        String     @unique
+  feePackage          FeePackage @relation(fields: [feePackageId], references: [id], onDelete: Cascade)
+  appliesToChargeType ChargeType @default(MONTHLY)
+  upfrontMonths       Int        @default(1)
+  description         String?
+  isActive            Boolean    @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EnrollmentFeeAdjustment {
+  id           String     @id @default(uuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  
+  feeItemId    String
+  feeItem      FeeItem    @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
+
+  amount       Float      // The amount to discount/waive from the standard cost
+  reason       String?    // e.g., "Siblings discount", "Registration waived for returning student"
+  quantity     Int?       // Override the default item quantity for this specific enrollment
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([enrollmentId, feeItemId])
 }

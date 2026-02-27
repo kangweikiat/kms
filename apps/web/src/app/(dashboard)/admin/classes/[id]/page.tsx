@@ -236,46 +236,56 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
                             </span>
                         </div>
                         <ul className="divide-y divide-gray-100">
-                            {classData.enrollments.map((enrollment) => (
-                                <li key={enrollment.id} className="p-4 hover:bg-gray-50 transition sm:p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold shrink-0">
-                                                {enrollment.student.name.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <Link href={`/admin/students/${enrollment.studentId}`} className="text-sm font-bold text-gray-900 hover:text-blue-600 transition">
-                                                    {enrollment.student.name}
-                                                </Link>
-                                                <div className="mt-1 flex items-center gap-2">
-                                                    <span
-                                                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${enrollment.student.race.toLowerCase() === 'malay' ? 'bg-green-100 text-green-800' :
-                                                            enrollment.student.race.toLowerCase() === 'chinese' ? 'bg-yellow-100 text-yellow-800' :
-                                                                enrollment.student.race.toLowerCase() === 'indian' ? 'bg-purple-100 text-purple-800' :
-                                                                    'bg-gray-100 text-gray-800'
-                                                            }`}
-                                                    >
-                                                        {enrollment.student.race}
-                                                    </span>
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium uppercase ${enrollment.student.gender.toLowerCase() === 'male' ? 'bg-sky-100 text-sky-800' : 'bg-pink-100 text-pink-800'}`}>
-                                                        {enrollment.student.gender}
-                                                    </span>
-                                                    <span
-                                                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${enrollment.isNewStudent ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}
-                                                    >
-                                                        {enrollment.isNewStudent ? 'New' : 'Old'}
-                                                    </span>
-                                                    <ProgramBadge type={enrollment.programType} className="text-xs" />
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${enrollment.transport ? 'bg-teal-100 text-teal-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                        {enrollment.transport ? 'Transport' : 'No Transport'}
-                                                    </span>
+                            {classData.enrollments.map((enrollment) => {
+                                const race = enrollment.student.race.toUpperCase();
+                                const lang = enrollment.languageClass;
+                                const isNonDefaultLanguage = lang && !(
+                                    (race === 'CHINESE' && lang === 'MANDARIN') ||
+                                    (race === 'MALAY' && lang === 'JAWI') ||
+                                    (race === 'INDIAN' && lang === 'TAMIL')
+                                );
+
+                                return (
+                                    <li key={enrollment.id} className="p-4 hover:bg-gray-50 transition sm:p-6">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold shrink-0">
+                                                    {enrollment.student.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <Link href={`/admin/students/${enrollment.studentId}`} className={`text-sm font-bold hover:text-blue-600 transition ${isNonDefaultLanguage ? 'text-red-600' : 'text-gray-900'}`}>
+                                                        {enrollment.student.name} {isNonDefaultLanguage && `*(${lang})`}
+                                                    </Link>
+                                                    <div className="mt-1 flex items-center gap-2">
+                                                        <span
+                                                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${enrollment.student.race.toLowerCase() === 'malay' ? 'bg-green-100 text-green-800' :
+                                                                enrollment.student.race.toLowerCase() === 'chinese' ? 'bg-yellow-100 text-yellow-800' :
+                                                                    enrollment.student.race.toLowerCase() === 'indian' ? 'bg-purple-100 text-purple-800' :
+                                                                        'bg-gray-100 text-gray-800'
+                                                                }`}
+                                                        >
+                                                            {enrollment.student.race}
+                                                        </span>
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium uppercase ${enrollment.student.gender.toLowerCase() === 'male' ? 'bg-sky-100 text-sky-800' : 'bg-pink-100 text-pink-800'}`}>
+                                                            {enrollment.student.gender}
+                                                        </span>
+                                                        <span
+                                                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${enrollment.isNewStudent ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}
+                                                        >
+                                                            {enrollment.isNewStudent ? 'New' : 'Old'}
+                                                        </span>
+                                                        <ProgramBadge type={enrollment.programType} className="text-xs" />
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${enrollment.transport ? 'bg-teal-100 text-teal-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                            {enrollment.transport ? 'Transport' : 'No Transport'}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <RemoveStudentButton enrollmentId={enrollment.id} classId={classData.id} studentName={enrollment.student.name} />
                                         </div>
-                                        <RemoveStudentButton enrollmentId={enrollment.id} classId={classData.id} studentName={enrollment.student.name} />
-                                    </div>
-                                </li>
-                            ))}
+                                    </li>
+                                )
+                            })}
                             {classData.enrollments.length === 0 && (
                                 <li className="p-8 text-center bg-white">
                                     <Users className="w-12 h-12 text-gray-200 mx-auto mb-3" />

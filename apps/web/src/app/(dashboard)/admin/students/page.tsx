@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { StatusFilter } from './_components/status-filter'
 import { ClassFilter } from './_components/class-filter'
+import { FeePackageFilter } from './_components/fee-package-filter'
 import { SearchBar } from './_components/search-bar'
 import { Prisma } from '@kms/database'
 import { StudentTable } from './_components/student-table'
@@ -10,7 +11,7 @@ import { StudentTable } from './_components/student-table'
 import { cookies } from 'next/headers'
 
 export default async function StudentsPage(props: {
-    searchParams: Promise<{ view?: string; q?: string; year?: string; page?: string; class?: string }>
+    searchParams: Promise<{ view?: string; q?: string; year?: string; page?: string; class?: string; feePackage?: string }>
 }) {
     const searchParams = await props.searchParams
     const cookieStore = await cookies()
@@ -18,6 +19,7 @@ export default async function StudentsPage(props: {
     const query = searchParams.q || ''
     const year = Number(searchParams.year) || Number(cookieStore.get('admin_year')?.value) || 2026
     const classFilterVal = searchParams.class
+    const feePackageFilterVal = searchParams.feePackage
 
     // Pagination defaults
     const currentPage = Number(searchParams.page) || 1
@@ -37,13 +39,18 @@ export default async function StudentsPage(props: {
         }
     }
 
+    const feePackageCondition =
+        feePackageFilterVal === 'assigned' ? { feePackageId: { not: null } } :
+            feePackageFilterVal === 'unassigned' ? { feePackageId: null } : {}
+
     const statusFilter: Prisma.StudentWhereInput = view === 'active'
         ? {
             enrollments: {
                 some: {
                     academicYear: year,
                     status: 'ACTIVE',
-                    ...(classFilterVal === 'unassigned' ? { classId: null } : classFilterVal ? { classId: classFilterVal } : {})
+                    ...(classFilterVal === 'unassigned' ? { classId: null } : classFilterVal ? { classId: classFilterVal } : {}),
+                    ...feePackageCondition
                 }
             }
         }
@@ -52,7 +59,8 @@ export default async function StudentsPage(props: {
                 some: {
                     academicYear: year,
                     status: { not: 'ACTIVE' },
-                    ...(classFilterVal === 'unassigned' ? { classId: null } : classFilterVal ? { classId: classFilterVal } : {})
+                    ...(classFilterVal === 'unassigned' ? { classId: null } : classFilterVal ? { classId: classFilterVal } : {}),
+                    ...feePackageCondition
                 }
             }
         }
@@ -102,6 +110,7 @@ export default async function StudentsPage(props: {
                     <div className="w-full sm:w-64">
                         <SearchBar />
                     </div>
+                    <FeePackageFilter />
                     <ClassFilter classes={classesForYear} currentClass={classFilterVal} />
                     <StatusFilter />
                     <Link
@@ -117,6 +126,7 @@ export default async function StudentsPage(props: {
             <StudentTable
                 students={students}
                 year={year}
+                view={view}
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={totalStudents}

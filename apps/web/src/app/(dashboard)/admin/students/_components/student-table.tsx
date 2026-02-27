@@ -27,6 +27,7 @@ type BaseEnrollment = {
         id: string
         name: string
     } | null
+    feePackageId: string | null
 }
 
 type StudentWithEnrollment = BaseStudent & {
@@ -38,6 +39,7 @@ interface StudentTableProps {
         enrollments: (BaseEnrollment & { class: { id: string, name: string } | null })[]
     })[]
     year: number
+    view?: string
     currentPage?: number
     totalPages?: number
     totalItems?: number
@@ -46,7 +48,7 @@ interface StudentTableProps {
 type SortColumn = 'name' | 'level' | 'program' | 'status' | 'class'
 type SortDirection = 'asc' | 'desc' | null
 
-export function StudentTable({ students, year, currentPage = 1, totalPages = 1, totalItems = 0 }: StudentTableProps) {
+export function StudentTable({ students, year, view = 'active', currentPage = 1, totalPages = 1, totalItems = 0 }: StudentTableProps) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
@@ -180,15 +182,20 @@ export function StudentTable({ students, year, currentPage = 1, totalPages = 1, 
                                     <SortIcon column="class" />
                                 </div>
                             </th>
-                            <th
-                                className="px-6 py-4 text-sm font-medium text-gray-500 cursor-pointer group hover:bg-gray-100 transition"
-                                onClick={() => handleSort('status')}
-                            >
-                                <div className="flex items-center gap-2">
-                                    Status
-                                    <SortIcon column="status" />
-                                </div>
+                            <th className="px-6 py-4 text-sm font-medium text-gray-500">
+                                Fee Package
                             </th>
+                            {view !== 'active' && (
+                                <th
+                                    className="px-6 py-4 text-sm font-medium text-gray-500 cursor-pointer group hover:bg-gray-100 transition"
+                                    onClick={() => handleSort('status')}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        Status
+                                        <SortIcon column="status" />
+                                    </div>
+                                </th>
+                            )}
                             <th className="px-6 py-4 text-sm font-medium text-gray-500 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -229,28 +236,41 @@ export function StudentTable({ students, year, currentPage = 1, totalPages = 1, 
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-sm">
-                                            {activeEnrollment?.status === 'WITHDRAWN' ? (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-500"></span>
-                                                    Withdrawn
-                                                </span>
-                                            ) : activeEnrollment?.status === 'COMPLETED' ? (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                                                    Completed
-                                                </span>
-                                            ) : isEnrolledActive ? (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
-                                                    Active
+                                            {activeEnrollment?.feePackageId ? (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                                    Assigned
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
-                                                    Inactive
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 italic border border-gray-200">
+                                                    Unassigned
                                                 </span>
                                             )}
                                         </td>
+                                        {view !== 'active' && (
+                                            <td className="px-6 py-4 text-sm">
+                                                {activeEnrollment?.status === 'WITHDRAWN' ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+                                                        Withdrawn
+                                                    </span>
+                                                ) : activeEnrollment?.status === 'COMPLETED' ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                                                        Completed
+                                                    </span>
+                                                ) : isEnrolledActive ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                                                        Active
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                                                        Inactive
+                                                    </span>
+                                                )}
+                                            </td>
+                                        )}
                                         <td className="px-6 py-4 text-sm text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <Link
