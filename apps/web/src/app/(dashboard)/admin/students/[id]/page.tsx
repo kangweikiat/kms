@@ -182,6 +182,28 @@ export default async function StudentDetailsPage({
                                             <span className="text-gray-500">Transport</span>
                                             <span className="font-medium text-gray-900">{enrollment.transport ? 'Yes' : 'No'}</span>
                                         </div>
+                                        <div className="flex justify-between text-sm items-center">
+                                            <span className="text-gray-500">Start Date</span>
+                                            <span className="font-medium text-gray-900">
+                                                {enrollment.startDate ? new Date(enrollment.startDate).toLocaleDateString() : '-'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between text-sm items-center">
+                                            <span className="text-gray-500">Language</span>
+                                            <span className={`font-medium ${(() => {
+                                                    const race = student.race.toUpperCase();
+                                                    const lang = enrollment.languageClass;
+                                                    if (!lang) return 'text-gray-900';
+                                                    const isDefault = (race === 'CHINESE' && lang === 'MANDARIN') ||
+                                                        (race === 'MALAY' && lang === 'JAWI') ||
+                                                        (race === 'INDIAN' && lang === 'TAMIL');
+                                                    // Highlight non-default language choices
+                                                    return isDefault ? 'text-gray-900' : 'text-blue-700 font-bold bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200';
+                                                })()
+                                                }`}>
+                                                {enrollment.languageClass || '-'}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {enrollment.remarks && (
