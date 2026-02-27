@@ -219,6 +219,13 @@ export async function hardDeleteStudent(id: string, year: number) {
             return { message: 'Enrollment not found or not in a withdrawable state.' };
         }
 
+        // 1.5 Delete the fee adjustments associated with this enrollment
+        await prisma.enrollmentFeeAdjustment.deleteMany({
+            where: {
+                enrollmentId: enrollment.id
+            }
+        });
+
         // 1. Delete the specific enrollment
         await prisma.enrollment.delete({
             where: {
@@ -295,6 +302,11 @@ export async function enrollStudent(studentId: string, prevState: any, formData:
 
 export async function assignFeePackage(enrollmentId: string, feePackageId: string, studentId: string) {
     try {
+        // First delete any previous fee adjustments since we are assigning a new package
+        await prisma.enrollmentFeeAdjustment.deleteMany({
+            where: { enrollmentId }
+        });
+
         await prisma.enrollment.update({
             where: { id: enrollmentId },
             data: {
