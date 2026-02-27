@@ -251,7 +251,11 @@ export default async function StudentDetailsPage({
                                                         enrollmentId={enrollment.id}
                                                         studentId={student.id}
                                                         isNewStudent={enrollment.isNewStudent}
-                                                        availablePackages={feePackages.filter(p => p.academicYearId === enrollment.class?.academicYearId || p.level === enrollment.enrollmentLevel)}
+                                                        availablePackages={feePackages.filter(p => p.level === enrollment.enrollmentLevel &&
+                                                            (p.programType === 'FULL_DAY' && enrollment.programType === 'FULL_DAY' ||
+                                                                p.programType === 'HALF_DAY_EXTENDED' && (enrollment.programType === 'MORNING_STAY_BACK' || enrollment.programType === 'AFTERNOON_STAY_BACK') ||
+                                                                p.programType === 'HALF_DAY' && (enrollment.programType === 'HALF_DAY_MORNING' || enrollment.programType === 'HALF_DAY_AFTERNOON'))
+                                                        )}
                                                     />
                                                 </div>
                                             </div>
