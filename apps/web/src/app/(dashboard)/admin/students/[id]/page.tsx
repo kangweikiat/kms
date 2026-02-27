@@ -1,6 +1,6 @@
 import { prisma } from '@kms/database'
 import Link from 'next/link'
-import { ArrowLeft, Pencil } from 'lucide-react'
+import { ArrowLeft, Pencil, Receipt, AlertCircle } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { ProgramBadge } from '../_components/program-badge'
@@ -223,22 +223,25 @@ export default async function StudentDetailsPage({
                                     </div> {/* End of Key-Value List */}
 
                                     {/* Fee Configuration Section */}
-                                    <div className="mt-1 pt-3 border-t border-gray-200/60">
-                                        <div className="flex items-center justify-between text-sm mb-2">
-                                            <span className="font-semibold text-gray-900">Fee Configuration</span>
-                                        </div>
+                                    <div className="mt-2 pt-4 border-t border-gray-200/60">
+                                        <div className="text-sm font-semibold text-gray-900 mb-3">Fee Configuration</div>
 
                                         {enrollment.feePackageId ? (
-                                            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="font-medium text-gray-900 text-sm">
-                                                        {feePackages.find(p => p.id === enrollment.feePackageId)?.name || 'Assigned'}
-                                                    </span>
-                                                    <span className="text-xs text-gray-500">
-                                                        Assigned {enrollment.feePackageAssignedAt ? new Date(enrollment.feePackageAssignedAt).toLocaleDateString() : ''}
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-blue-50/50 border border-blue-100">
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-2.5 mb-1">
+                                                        <div className="bg-blue-100/80 text-blue-700 p-1.5 rounded-lg shadow-sm">
+                                                            <Receipt className="w-4 h-4" />
+                                                        </div>
+                                                        <span className="font-semibold text-gray-900">
+                                                            {feePackages.find(p => p.id === enrollment.feePackageId)?.name || 'Assigned Package'}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-xs text-gray-500 ml-9">
+                                                        Assigned {enrollment.feePackageAssignedAt ? new Date(enrollment.feePackageAssignedAt).toLocaleDateString() : 'Unknown'}
                                                     </span>
                                                 </div>
-                                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                                <div className="flex flex-wrap items-center gap-2 ml-9 sm:ml-0">
                                                     <FeePreviewModule
                                                         enrollmentId={enrollment.id}
                                                         studentId={student.id}
@@ -253,18 +256,25 @@ export default async function StudentDetailsPage({
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                                <span className="text-sm font-medium text-amber-800">No fee package assigned</span>
-                                                <AssignFeeModal
-                                                    enrollmentId={enrollment.id}
-                                                    studentId={student.id}
-                                                    isNewStudent={enrollment.isNewStudent}
-                                                    availablePackages={feePackages.filter(p => p.level === enrollment.enrollmentLevel &&
-                                                        (p.programType === 'FULL_DAY' && enrollment.programType === 'FULL_DAY' ||
-                                                            p.programType === 'HALF_DAY_EXTENDED' && (enrollment.programType === 'MORNING_STAY_BACK' || enrollment.programType === 'AFTERNOON_STAY_BACK') ||
-                                                            p.programType === 'HALF_DAY' && (enrollment.programType === 'HALF_DAY_MORNING' || enrollment.programType === 'HALF_DAY_AFTERNOON'))
-                                                    )}
-                                                />
+                                            <div className="bg-amber-50/50 border border-amber-200/70 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="bg-amber-100 text-amber-700 p-1.5 rounded-lg shadow-sm">
+                                                        <AlertCircle className="w-4 h-4" />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-amber-900">No fee package assigned</span>
+                                                </div>
+                                                <div className="ml-9 sm:ml-0">
+                                                    <AssignFeeModal
+                                                        enrollmentId={enrollment.id}
+                                                        studentId={student.id}
+                                                        isNewStudent={enrollment.isNewStudent}
+                                                        availablePackages={feePackages.filter(p => p.level === enrollment.enrollmentLevel &&
+                                                            (p.programType === 'FULL_DAY' && enrollment.programType === 'FULL_DAY' ||
+                                                                p.programType === 'HALF_DAY_EXTENDED' && (enrollment.programType === 'MORNING_STAY_BACK' || enrollment.programType === 'AFTERNOON_STAY_BACK') ||
+                                                                p.programType === 'HALF_DAY' && (enrollment.programType === 'HALF_DAY_MORNING' || enrollment.programType === 'HALF_DAY_AFTERNOON'))
+                                                        )}
+                                                    />
+                                                </div>
                                             </div>
                                         )}
                                     </div>
