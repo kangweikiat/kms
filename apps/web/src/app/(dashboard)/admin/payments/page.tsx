@@ -1,6 +1,7 @@
 import { getDashboardData } from './actions'
 import { PaymentTable } from './_components/payment-table'
 import { cookies } from 'next/headers'
+import { SearchBar } from '../students/_components/search-bar'
 
 export default async function PaymentsDashboardPage(props: {
     searchParams: Promise<{ q?: string; year?: string; status?: string }>
@@ -48,7 +49,9 @@ export default async function PaymentsDashboardPage(props: {
         <div className="max-w-7xl mx-auto space-y-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-3xl font-bold text-gray-900">Payment Dashboard</h1>
-                {/* We can add filter components here later */}
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <SearchBar />
+                </div>
             </div>
 
             <PaymentTable

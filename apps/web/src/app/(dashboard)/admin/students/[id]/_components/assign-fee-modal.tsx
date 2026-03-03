@@ -95,20 +95,11 @@ export function AssignFeeModal({ enrollmentId, studentId, isNewStudent, availabl
 
         startTransition(async () => {
             if (isSwitch) {
-                let nextProgramType = currentProgramType || 'HALF_DAY_MORNING';
-
-                // Automatically deduce the correct specific enrollment program type based on the base Fee Package program type
-                if (selectedPackage?.programType === 'FULL_DAY') {
-                    nextProgramType = 'FULL_DAY';
-                } else if (selectedPackage?.programType === 'HALF_DAY_EXTENDED') {
-                    nextProgramType = currentProgramType?.includes('AFTERNOON') ? 'AFTERNOON_STAY_BACK' : 'MORNING_STAY_BACK';
-                } else if (selectedPackage?.programType === 'HALF_DAY') {
-                    nextProgramType = currentProgramType?.includes('AFTERNOON') ? 'HALF_DAY_AFTERNOON' : 'HALF_DAY_MORNING';
-                }
-
+                // We no longer change the program type here per user request. 
+                // Any programme changes must be done by editing student details.
                 await changeProgrammeWorkflow({
                     enrollmentId,
-                    toProgramType: nextProgramType as any,
+                    toProgramType: currentProgramType as any,
                     effectiveMonth,
                     toFeePackageId: selectedPackageId,
                     reason,

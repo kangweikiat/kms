@@ -8,7 +8,7 @@ import { DeleteButton } from '../_components/delete-button'
 import { ReactivateButton } from '../_components/reactivate-button'
 import { HardDeleteButton } from '../_components/hard-delete-button'
 import { LevelBadge } from '../_components/level-badge'
-import { AssignFeeModal } from './_components/assign-fee-modal'
+
 import { FeePreviewModule } from './_components/fee-preview-module'
 
 export default async function StudentDetailsPage({
@@ -233,28 +233,24 @@ export default async function StudentDetailsPage({
                                                         <div className="bg-blue-100/80 text-blue-700 p-1.5 rounded-lg shadow-sm">
                                                             <Receipt className="w-4 h-4" />
                                                         </div>
-                                                        <span className="font-semibold text-gray-900">
-                                                            {feePackages.find(p => p.id === enrollment.feePackageId)?.name || 'Assigned Package'}
-                                                        </span>
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-medium text-gray-900 border-b pb-2 mb-2">
+                                                                    Fee Configuration
+                                                                </span>
+                                                                <span className="text-xs text-gray-500">
+                                                                    Assigned {enrollment.feePackageAssignedAt ? new Date(enrollment.feePackageAssignedAt).toLocaleDateString() : 'Unknown'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
+                                                                <FeePreviewModule
+                                                                    enrollmentId={enrollment.id}
+                                                                    studentId={student.id}
+                                                                    feePackageName={feePackages.find(p => p.id === enrollment.feePackageId)?.name}
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <span className="text-xs text-gray-500 ml-9">
-                                                        Assigned {enrollment.feePackageAssignedAt ? new Date(enrollment.feePackageAssignedAt).toLocaleDateString() : 'Unknown'}
-                                                    </span>
-                                                </div>
-                                                <div className="flex flex-wrap items-center gap-2 ml-9 sm:ml-0">
-                                                    <FeePreviewModule
-                                                        enrollmentId={enrollment.id}
-                                                        studentId={student.id}
-                                                        feePackageName={feePackages.find(p => p.id === enrollment.feePackageId)?.name}
-                                                    />
-                                                    <AssignFeeModal
-                                                        enrollmentId={enrollment.id}
-                                                        studentId={student.id}
-                                                        isNewStudent={enrollment.isNewStudent}
-                                                        currentFeePackageId={enrollment.feePackageId}
-                                                        currentProgramType={enrollment.programType}
-                                                        availablePackages={feePackages.filter(p => p.level === enrollment.enrollmentLevel)}
-                                                    />
                                                 </div>
                                             </div>
                                         ) : (
@@ -263,16 +259,7 @@ export default async function StudentDetailsPage({
                                                     <div className="bg-amber-100 text-amber-700 p-1.5 rounded-lg shadow-sm">
                                                         <AlertCircle className="w-4 h-4" />
                                                     </div>
-                                                    <span className="text-sm font-medium text-amber-900">No fee package assigned</span>
-                                                </div>
-                                                <div className="ml-9 sm:ml-0">
-                                                    <AssignFeeModal
-                                                        enrollmentId={enrollment.id}
-                                                        studentId={student.id}
-                                                        isNewStudent={enrollment.isNewStudent}
-                                                        currentProgramType={enrollment.programType}
-                                                        availablePackages={feePackages.filter(p => p.level === enrollment.enrollmentLevel)}
-                                                    />
+                                                    <span className="text-sm font-medium text-amber-900">No fee package assigned. Packages are automatically assigned upon enrollment.</span>
                                                 </div>
                                             </div>
                                         )}
