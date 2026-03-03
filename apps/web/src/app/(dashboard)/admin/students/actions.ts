@@ -18,7 +18,7 @@ function determineProgramType(formData: FormData): ProgramType {
     if (session === 'MORNING') {
         return stayBack ? ProgramType.MORNING_STAY_BACK : ProgramType.HALF_DAY_MORNING
     } else {
-        return stayBack ? ProgramType.AFTERNOON_STAY_BACK : ProgramType.HALF_DAY_AFTERNOON
+        return ProgramType.HALF_DAY_AFTERNOON
     }
 }
 
@@ -169,6 +169,18 @@ export async function updateStudent(id: string, prevState: any, formData: FormDa
     const enrollmentData = extractEnrollmentData(formData)
 
     try {
+        const existingEnrollment = await prisma.enrollment.findUnique({
+            where: {
+                studentId_academicYear: {
+                    studentId: id,
+                    academicYear: enrollmentData.academicYear
+                }
+            }
+        });
+
+        const programChanged = existingEnrollment && existingEnrollment.programType !== enrollmentData.programType;
+        const { programType: newProgramType, ...enrollmentUpdateData } = enrollmentData;
+
         const result = await prisma.$transaction(async (tx) => {
             await tx.student.update({
                 where: { id },
@@ -184,18 +196,47 @@ export async function updateStudent(id: string, prevState: any, formData: FormDa
                         academicYear: enrollmentData.academicYear
                     }
                 },
-                update: enrollmentData,
+                update: programChanged ? enrollmentUpdateData : enrollmentData,
                 create: {
                     ...enrollmentData,
                     studentId: id
                 }
             })
-        })
+        });
 
-        // Always attempt to auto-assign in case the program type changed during the student profile update
-        // If it hasn't changed, the auto-assigner will gracefully skip updating the assignment timestamp
-        if (result) {
-            await autoAssignFeePackage(result.id, enrollmentData)
+        if (!existingEnrollment) {
+            await autoAssignFeePackage(result.id, enrollmentData);
+        } else if (programChanged) {
+            const { changeProgrammeWorkflow } = await import('./program-actions');
+
+            const yearOpt = await prisma.academicYear.findUnique({
+                where: { year: enrollmentData.academicYear }
+            });
+
+            let toFeePackageId = undefined;
+            if (yearOpt) {
+                let searchType = 'HALF_DAY';
+                if (newProgramType === 'FULL_DAY') searchType = 'FULL_DAY';
+                else if ((newProgramType as string).includes('STAY_BACK')) searchType = 'HALF_DAY_EXTENDED';
+
+                const matchingPackage = await prisma.feePackage.findFirst({
+                    where: {
+                        level: enrollmentData.enrollmentLevel,
+                        academicYearId: yearOpt.id,
+                        programType: searchType as any,
+                        isActive: true
+                    }
+                });
+                toFeePackageId = matchingPackage?.id;
+            }
+
+            await changeProgrammeWorkflow({
+                enrollmentId: result.id,
+                toProgramType: newProgramType as any,
+                effectiveMonth: new Date().getMonth() + 1,
+                toFeePackageId: toFeePackageId,
+                reason: "Program change via Student Edit",
+            });
         }
 
         revalidatePath('/admin/students')

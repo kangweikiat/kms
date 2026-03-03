@@ -436,23 +436,26 @@ export async function logLumpsumPayment(data: {
             priority: number;
         }> = [];
 
-        // 2. First month's fees only
-        if (enrollment.monthlyFeeInstances.length > 0) {
-            const firstMonth = enrollment.monthlyFeeInstances[0].month;
-            const firstMonthInstances = enrollment.monthlyFeeInstances.filter(m => m.month === firstMonth);
-
-            for (const inst of firstMonthInstances) {
-                const paid = inst.payments.reduce((s, p) => s + p.amountPaid, 0);
-                const outstanding = Math.max(0, inst.amountDue - paid);
-                if (outstanding > 0) {
-                    payableItems.push({
-                        id: inst.id,
-                        type: 'MONTHLY',
-                        name: `Month ${inst.month}`,
-                        outstanding,
-                        priority: 1
-                    });
+        // 2. All Monthly fees (dynamic priority)
+        const firstMonth = enrollment.monthlyFeeInstances.length > 0 ? enrollment.monthlyFeeInstances[0].month : 1;
+        for (const inst of enrollment.monthlyFeeInstances) {
+            const paid = inst.payments.reduce((s, p) => s + p.amountPaid, 0);
+            const outstanding = Math.max(0, inst.amountDue - paid);
+            if (outstanding > 0) {
+                let priority: number;
+                if (inst.month === firstMonth) {
+                    priority = 1; // Prioritize first month alongside start-up fees
+                } else {
+                    priority = 5 + inst.month; // Subsequent months cascade priorities
                 }
+
+                payableItems.push({
+                    id: inst.id,
+                    type: 'MONTHLY',
+                    name: `Month ${inst.month}`,
+                    outstanding,
+                    priority
+                });
             }
         }
 
