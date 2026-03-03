@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { assignFeePackage } from '../../actions'
+import { changeProgrammeWorkflow } from '../../program-actions'
 import { Loader2, Calculator } from 'lucide-react'
 import * as Dialog from '@radix-ui/react-dialog'
 
@@ -37,14 +38,19 @@ interface AssignFeeModalProps {
     studentId: string
     isNewStudent: boolean
     availablePackages: FeePackage[]
+    currentFeePackageId?: string
+    currentProgramType?: string
 }
 
-export function AssignFeeModal({ enrollmentId, studentId, isNewStudent, availablePackages }: AssignFeeModalProps) {
+export function AssignFeeModal({ enrollmentId, studentId, isNewStudent, availablePackages, currentFeePackageId, currentProgramType }: AssignFeeModalProps) {
     const [open, setOpen] = useState(false)
-    const [selectedPackageId, setSelectedPackageId] = useState<string>('')
+    const [selectedPackageId, setSelectedPackageId] = useState<string>(currentFeePackageId || '')
+    const [effectiveMonth, setEffectiveMonth] = useState<number>(new Date().getMonth() + 1)
+    const [reason, setReason] = useState<string>('')
     const [isPending, startTransition] = useTransition()
 
     const selectedPackage = availablePackages.find(p => p.id === selectedPackageId)
+    const isSwitch = !!currentFeePackageId
 
     const calculatePreview = () => {
         if (!selectedPackage) return null
@@ -88,7 +94,28 @@ export function AssignFeeModal({ enrollmentId, studentId, isNewStudent, availabl
         if (!selectedPackageId) return
 
         startTransition(async () => {
-            await assignFeePackage(enrollmentId, selectedPackageId, studentId)
+            if (isSwitch) {
+                let nextProgramType = currentProgramType || 'HALF_DAY_MORNING';
+
+                // Automatically deduce the correct specific enrollment program type based on the base Fee Package program type
+                if (selectedPackage?.programType === 'FULL_DAY') {
+                    nextProgramType = 'FULL_DAY';
+                } else if (selectedPackage?.programType === 'HALF_DAY_EXTENDED') {
+                    nextProgramType = currentProgramType?.includes('AFTERNOON') ? 'AFTERNOON_STAY_BACK' : 'MORNING_STAY_BACK';
+                } else if (selectedPackage?.programType === 'HALF_DAY') {
+                    nextProgramType = currentProgramType?.includes('AFTERNOON') ? 'HALF_DAY_AFTERNOON' : 'HALF_DAY_MORNING';
+                }
+
+                await changeProgrammeWorkflow({
+                    enrollmentId,
+                    toProgramType: nextProgramType as any,
+                    effectiveMonth,
+                    toFeePackageId: selectedPackageId,
+                    reason,
+                });
+            } else {
+                await assignFeePackage(enrollmentId, selectedPackageId, studentId)
+            }
             setOpen(false)
         })
     }
@@ -133,6 +160,36 @@ export function AssignFeeModal({ enrollmentId, studentId, isNewStudent, availabl
                                 <p className="text-sm text-red-500 mt-1">No fee packages available for this Enrollment's Level and Program.</p>
                             )}
                         </div>
+
+                        {isSwitch && (
+                            <>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700">Effective Starting Month</label>
+                                    <select
+                                        value={effectiveMonth}
+                                        onChange={(e) => setEffectiveMonth(Number(e.target.value))}
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                    >
+                                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                                            <option key={month} value={month}>
+                                                Month {month} ({new Date(0, month - 1).toLocaleString('default', { month: 'long' })})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-amber-600 mt-1">Unpaid monthly fees from this month onwards will be deleted and regenerated based on the new package.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700">Reason for Change (Optional)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Upgrading to Full Day"
+                                        value={reason}
+                                        onChange={(e) => setReason(e.target.value)}
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
+                                </div>
+                            </>
+                        )}
 
                         {preview && (
                             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">

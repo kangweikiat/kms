@@ -7,11 +7,21 @@ type DashboardRow = {
     studentName: string
     level: string
     program: string
-    totalDue: number
-    totalPaid: number
-    totalOutstanding: number
+    startupDue: number
+    startupPaid: number
+    startupOutstanding: number
+    startupStatus: PaymentStatusEnum
+    miscDue: number
+    miscPaid: number
+    miscOutstanding: number
+    miscStatus: PaymentStatusEnum
+    monthlyDue: number
+    monthlyPaid: number
+    monthlyStatuses: { month: number; status: PaymentStatusEnum | null }[]
     status: PaymentStatusEnum
 }
+
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov']
 
 export function PaymentTable({
     data,
@@ -34,12 +44,11 @@ export function PaymentTable({
                 <table className="w-full text-left text-sm whitespace-nowrap">
                     <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 font-medium">
                         <tr>
-                            <th className="px-6 py-4">Student</th>
-                            <th className="px-6 py-4">Program</th>
-                            <th className="px-6 py-4 text-right">Total Due</th>
-                            <th className="px-6 py-4 text-right">Paid</th>
-                            <th className="px-6 py-4 text-right">Outstanding</th>
-                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4">Student & Program</th>
+                            <th className="px-6 py-4">Startup Fees</th>
+                            <th className="px-6 py-4">Misc Fees</th>
+                            <th className="px-6 py-4 min-w-[200px]">Monthly Progress</th>
+                            <th className="px-6 py-4 text-center">Global Status</th>
                             <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -48,24 +57,60 @@ export function PaymentTable({
                             <tr key={row.enrollmentId} className="hover:bg-gray-50/50 transition">
                                 <td className="px-6 py-4">
                                     <div className="font-semibold text-gray-900">{row.studentName}</div>
-                                    <div className="text-xs text-gray-500">ID: {row.studentId} • Level: {row.level}</div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        Level: {row.level} • {row.program.replace(/_/g, ' ')}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="text-gray-900 font-medium">{row.program.replace(/_/g, ' ')}</div>
-                                </td>
-                                <td className="px-6 py-4 text-right text-gray-600">
-                                    {formatCurrency(row.totalDue)}
-                                </td>
-                                <td className="px-6 py-4 text-right text-green-600 font-medium">
-                                    {formatCurrency(row.totalPaid)}
-                                </td>
-                                <td className="px-6 py-4 text-right text-red-600 font-bold">
-                                    {formatCurrency(row.totalOutstanding)}
+                                    <div className="flex flex-col gap-1">
+                                        <div className="text-gray-900 font-medium">{formatCurrency(row.startupDue)}</div>
+                                        {row.startupOutstanding > 0 && (
+                                            <div className="text-xs text-red-600 font-medium">Due: {formatCurrency(row.startupOutstanding)}</div>
+                                        )}
+                                        {row.startupPaid > 0 && (
+                                            <div className="text-xs text-green-600 font-medium">Paid: {formatCurrency(row.startupPaid)}</div>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4">
+                                    <div className="flex flex-col gap-1">
+                                        <div className="text-gray-900 font-medium">{formatCurrency(row.miscDue)}</div>
+                                        {row.miscOutstanding > 0 && (
+                                            <div className="text-xs text-red-600 font-medium">Due: {formatCurrency(row.miscOutstanding)}</div>
+                                        )}
+                                        {row.miscPaid > 0 && (
+                                            <div className="text-xs text-green-600 font-medium">Paid: {formatCurrency(row.miscPaid)}</div>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="flex flex-wrap gap-1">
+                                        {row.monthlyStatuses.map((m, idx) => {
+                                            const bgColor = m.status === 'PAID' ? 'bg-green-500'
+                                                : m.status === 'PARTIAL' ? 'bg-amber-400'
+                                                    : m.status === 'UNPAID' ? 'bg-red-500'
+                                                        : 'bg-gray-200 border border-gray-300';
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    title={`${MONTH_NAMES[idx]}: ${m.status || 'No Fee'}`}
+                                                    className={`w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold text-white shadow-sm ${bgColor}`}
+                                                >
+                                                    {m.status ? MONTH_NAMES[idx].charAt(0) : '-'}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                    {row.monthlyDue > 0 && (
+                                        <div className="text-xs text-gray-500 mt-2">
+                                            {formatCurrency(row.monthlyPaid)} / {formatCurrency(row.monthlyDue)} Paid
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 text-center">
                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${row.status === 'PAID' ? 'bg-green-100 text-green-800' :
-                                            row.status === 'PARTIAL' ? 'bg-amber-100 text-amber-800' :
-                                                'bg-red-100 text-red-800'
+                                        row.status === 'PARTIAL' ? 'bg-amber-100 text-amber-800' :
+                                            'bg-red-100 text-red-800'
                                         }`}>
                                         {row.status}
                                     </span>
@@ -82,7 +127,7 @@ export function PaymentTable({
                         ))}
                         {data.length === 0 && (
                             <tr>
-                                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                                     No payment records found.
                                 </td>
                             </tr>

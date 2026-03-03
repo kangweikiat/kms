@@ -124,7 +124,7 @@ export async function updateStudent(id: string, prevState: any, formData: FormDa
     const enrollmentData = extractEnrollmentData(formData)
 
     try {
-        await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx) => {
             await tx.student.update({
                 where: { id },
                 data: studentData
@@ -132,7 +132,7 @@ export async function updateStudent(id: string, prevState: any, formData: FormDa
 
             // Upsert enrollment based on the year provided in the form
             // This ensures we update the CORRECT enrollment year, or create it if missing
-            await tx.enrollment.upsert({
+            return await tx.enrollment.upsert({
                 where: {
                     studentId_academicYear: {
                         studentId: id,
@@ -146,6 +146,11 @@ export async function updateStudent(id: string, prevState: any, formData: FormDa
                 }
             })
         })
+
+        // If the enrollment already has a fee package, changes to properties like `startDate` should trigger a resync of instances
+        if (result && result.feePackageId) {
+            await generateInstancesForEnrollment(result.id)
+        }
 
         revalidatePath('/admin/students')
         revalidatePath(`/admin/students/${id}`)

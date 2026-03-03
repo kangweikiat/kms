@@ -113,6 +113,7 @@ model Enrollment {
   monthlyFeeInstances  MonthlyFeeInstance[]
   bookInstances        BookInstance[]
   miscFees             MiscFee[]
+  programChanges       EnrollmentProgramChange[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -402,6 +403,28 @@ model MiscFee {
   name         String
   amountDue    Float
   status       PaymentStatusEnum @default(UNPAID)
+  isAdhoc      Boolean @default(false)
 
   payments     Payment[]
+}
+
+model EnrollmentProgramChange {
+  id               String      @id @default(uuid())
+  enrollmentId     String
+  enrollment       Enrollment  @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  
+  effectiveMonth   Int         // 1 = Jan, 2 = Feb, etc.
+  
+  fromProgramType  ProgramType
+  toProgramType    ProgramType
+  
+  fromFeePackageId String?     // Nullable depending on if packages existed
+  toFeePackageId   String?     // The package applied going forward
+  
+  reason           String?     // Optional comment/reason for switching
+  
+  createdAt        DateTime    @default(now())
+  createdByUserId  String?     // Optional: If you want to track which admin did this
+
+  @@index([enrollmentId, effectiveMonth])
 }
