@@ -718,3 +718,113 @@ export async function restoreMonthlyFeeAmount({
         return { success: false, error: error.message };
     }
 }
+
+export async function cancelPayment(paymentId: string) {
+    try {
+        const payment = await prisma.payment.findUnique({
+            where: { id: paymentId },
+            include: {
+                monthlyFeeInstance: { include: { payments: true } },
+                miscFee: { include: { payments: true } },
+                bookInstance: { include: { payments: true } }
+            }
+        });
+
+        if (!payment) {
+            return { success: false, error: "Payment not found." };
+        }
+
+        await prisma.$transaction(async (tx) => {
+            // Delete the payment
+            await tx.payment.delete({
+                where: { id: paymentId }
+            });
+
+            // Recalculate statuses
+            if (payment.monthlyFeeInstance) {
+                const remainingPayments = payment.monthlyFeeInstance.payments.filter(p => p.id !== paymentId);
+                const totalPaid = remainingPayments.reduce((sum, p) => sum + p.amountPaid, 0);
+                const amountDue = payment.monthlyFeeInstance.amountDue;
+
+                let newStatus = 'UNPAID';
+                if (totalPaid >= amountDue && amountDue > 0) newStatus = 'PAID';
+                else if (totalPaid > 0) newStatus = 'PARTIAL';
+
+                // Keep WAIVED if fully paid off originally but then dropped to 0 and was explicitly waived
+                if ((payment.monthlyFeeInstance as any).status === 'WAIVED') {
+                    if (totalPaid === 0 && (payment.monthlyFeeInstance as any).adjustmentType === 'WAIVE') {
+                        newStatus = 'WAIVED';
+                    }
+                }
+
+                await tx.monthlyFeeInstance.update({
+                    where: { id: payment.monthlyFeeInstance.id },
+                    data: { status: newStatus as any }
+                });
+            } else if (payment.miscFee) {
+                const remainingPayments = payment.miscFee.payments.filter(p => p.id !== paymentId);
+                const totalPaid = remainingPayments.reduce((sum, p) => sum + p.amountPaid, 0);
+                const amountDue = payment.miscFee.amountDue;
+
+                let newStatus = 'UNPAID';
+                if (totalPaid >= amountDue && amountDue > 0) newStatus = 'PAID';
+                else if (totalPaid > 0) newStatus = 'PARTIAL';
+
+                await tx.miscFee.update({
+                    where: { id: payment.miscFee.id },
+                    data: { status: newStatus as any }
+                });
+            } else if (payment.bookInstance) {
+                const remainingPayments = payment.bookInstance.payments.filter(p => p.id !== paymentId);
+                const totalPaid = remainingPayments.reduce((sum, p) => sum + p.amountPaid, 0);
+                const amountDue = payment.bookInstance.amountDue;
+
+                let newStatus = 'UNPAID';
+                if (totalPaid >= amountDue && amountDue > 0) newStatus = 'PAID';
+                else if (totalPaid > 0) newStatus = 'PARTIAL';
+
+                await tx.bookInstance.update({
+                    where: { id: payment.bookInstance.id },
+                    data: { status: newStatus as any }
+                });
+            }
+        });
+
+        revalidatePath(`/admin/payments`);
+        revalidatePath(`/admin/payments/${payment.enrollmentId}`);
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('cancelPayment error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function deleteMiscFee(miscFeeId: string) {
+    try {
+        const miscFee = await prisma.miscFee.findUnique({
+            where: { id: miscFeeId },
+            include: { payments: true }
+        });
+
+        if (!miscFee) {
+            return { success: false, error: "Miscellaneous fee not found." };
+        }
+
+        if (miscFee.status !== 'UNPAID' || miscFee.payments.length > 0) {
+            return { success: false, error: "Cannot delete a fee that already has payments recorded. Cancel the payments first." };
+        }
+
+        await prisma.miscFee.delete({
+            where: { id: miscFeeId }
+        });
+
+        revalidatePath(`/admin/payments`);
+        revalidatePath(`/admin/payments/${miscFee.enrollmentId}`);
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('deleteMiscFee error:', error);
+        return { success: false, error: error.message };
+    }
+}

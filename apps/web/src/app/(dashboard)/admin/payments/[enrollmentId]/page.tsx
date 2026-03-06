@@ -6,8 +6,9 @@ import { PaymentStatusEnum, PaymentMethodEnum } from '@kms/database'
 import { LogPaymentModal } from './_components/log-payment-modal'
 import { AddAdhocChargeModal } from './_components/add-adhoc-charge-modal'
 import { LogLumpsumPaymentModal } from './_components/log-lumpsum-payment-modal'
-
 import { AdjustMonthlyFeesModal } from './_components/adjust-monthly-fees-modal'
+import { CancelPaymentButton } from './_components/cancel-payment-button'
+import { DeleteMiscFeeButton } from './_components/delete-misc-fee-button'
 
 export default async function StudentPaymentDetailsPage(props: {
     params: Promise<{ enrollmentId: string }>
@@ -27,7 +28,7 @@ export default async function StudentPaymentDetailsPage(props: {
     const renderStatusBadge = (status: PaymentStatusEnum) => {
         if (status === 'PAID') return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800"><CheckCircle2 className="w-3.5 h-3.5" /> PAID</span>
         if (status === 'PARTIAL') return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800"><Clock className="w-3.5 h-3.5" /> PARTIAL</span>
-        if (status === 'WAIVED') return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800"><CheckCircle2 className="w-3.5 h-3.5" /> WAIVED</span>
+        if ((status as any) === 'WAIVED') return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800"><CheckCircle2 className="w-3.5 h-3.5" /> WAIVED</span>
         return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800"><Clock className="w-3.5 h-3.5" /> UNPAID</span>
     }
 
@@ -68,9 +69,14 @@ export default async function StudentPaymentDetailsPage(props: {
                         <div className="mt-3 text-xs bg-gray-50 p-3 rounded-lg border border-gray-100 space-y-1.5">
                             <div className="font-medium text-gray-700">Payment History:</div>
                             {misc.payments.map((p: any) => (
-                                <div key={p.id} className="flex items-center justify-between text-gray-600">
+                                <div key={p.id} className="flex items-center justify-between text-gray-600 group">
                                     <span>{new Date(p.paidAt).toLocaleDateString()} via {p.method}</span>
-                                    <span className="font-medium text-green-700">+{formatCurrency(p.amountPaid)}</span>
+                                    <div className="flex items-center">
+                                        <span className="font-medium text-green-700">+{formatCurrency(p.amountPaid)}</span>
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <CancelPaymentButton paymentId={p.id} />
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -85,6 +91,9 @@ export default async function StudentPaymentDetailsPage(props: {
                             itemName={misc.name}
                             amountDue={outstanding}
                         />
+                    )}
+                    {misc.isAdhoc && misc.status === 'UNPAID' && misc.payments.length === 0 && (
+                        <DeleteMiscFeeButton miscFeeId={misc.id} itemName={misc.name} />
                     )}
                 </div>
             </div>
@@ -168,9 +177,14 @@ export default async function StudentPaymentDetailsPage(props: {
                                             <div className="mt-3 text-xs bg-gray-50 p-3 rounded-lg border border-gray-100 space-y-1.5">
                                                 <div className="font-medium text-gray-700">Payment History:</div>
                                                 {inst.payments.map((p: any) => (
-                                                    <div key={p.id} className="flex items-center justify-between text-gray-600">
+                                                    <div key={p.id} className="flex items-center justify-between text-gray-600 group">
                                                         <span>{new Date(p.paidAt).toLocaleDateString()} via {p.method}</span>
-                                                        <span className="font-medium text-green-700">+{formatCurrency(p.amountPaid)}</span>
+                                                        <div className="flex items-center">
+                                                            <span className="font-medium text-green-700">+{formatCurrency(p.amountPaid)}</span>
+                                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <CancelPaymentButton paymentId={p.id} />
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
