@@ -8,7 +8,7 @@ import { DeleteButton } from '../_components/delete-button'
 import { ReactivateButton } from '../_components/reactivate-button'
 import { HardDeleteButton } from '../_components/hard-delete-button'
 import { LevelBadge } from '../_components/level-badge'
-import { AssignFeeModal } from './_components/assign-fee-modal'
+
 import { FeePreviewModule } from './_components/fee-preview-module'
 
 export default async function StudentDetailsPage({
@@ -181,103 +181,84 @@ export default async function StudentDetailsPage({
                                         </span>
                                     </div>
 
-                                    <div className="space-y-1.5 pt-2 border-t border-gray-200/60">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">Program</span>
-                                            <span className="font-medium text-gray-900">{enrollment.programType.replace(/_/g, ' ')}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">Class</span>
-                                            <span className="font-medium text-gray-900">{enrollment.class ? enrollment.class.name : 'Unassigned'}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">Level</span>
-                                            <LevelBadge level={enrollment.enrollmentLevel} />
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">Transport</span>
-                                            <span className="font-medium text-gray-900">{enrollment.transport ? 'Yes' : 'No'}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm items-center">
-                                            <span className="text-gray-500">Start Date</span>
-                                            <span className="font-medium text-gray-900">
-                                                {enrollment.startDate ? new Date(enrollment.startDate).toLocaleDateString() : '-'}
+                                    <div className="grid grid-cols-2 gap-y-4 gap-x-6 pt-4 border-t border-gray-200/60">
+                                        <div>
+                                            <span className="block text-[11px] font-medium text-gray-500 mb-1 uppercase tracking-wider">Program</span>
+                                            <span className="block text-sm font-semibold text-gray-900">
+                                                {enrollment.programType ? enrollment.programType.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : '-'}
                                             </span>
                                         </div>
-                                        <div className="flex justify-between text-sm items-center">
-                                            <span className="text-gray-500">Language</span>
-                                            <span className={`font-medium ${(() => {
-                                                const race = student.race.toUpperCase();
+                                        <div>
+                                            <span className="block text-[11px] font-medium text-gray-500 mb-1 uppercase tracking-wider">Class</span>
+                                            <span className="block text-sm font-semibold text-gray-900">{enrollment.class ? enrollment.class.name : 'Unassigned'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-[11px] font-medium text-gray-500 mb-1 uppercase tracking-wider">Level</span>
+                                            <div>
+                                                <LevelBadge level={enrollment.enrollmentLevel} />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span className="block text-[11px] font-medium text-gray-500 mb-1 uppercase tracking-wider">Language</span>
+                                            <span className={`inline-flex items-center text-sm font-semibold ${(() => {
+                                                const race = student.race?.toUpperCase() || '';
                                                 const lang = enrollment.languageClass;
                                                 if (!lang) return 'text-gray-900';
                                                 const isDefault = (race === 'CHINESE' && lang === 'MANDARIN') ||
                                                     (race === 'MALAY' && lang === 'JAWI') ||
                                                     (race === 'INDIAN' && lang === 'TAMIL');
                                                 // Highlight non-default language choices
-                                                return isDefault ? 'text-gray-900' : 'text-blue-700 font-bold bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200';
-                                            })()
-                                                }`}>
-                                                {enrollment.languageClass || '-'}
+                                                return isDefault ? 'text-gray-900' : 'text-blue-700 bg-blue-50 px-2 py-0.5 -ml-2 rounded-md border border-blue-200';
+                                            })()}`}>
+                                                {enrollment.languageClass ? enrollment.languageClass.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) : '-'}
                                             </span>
                                         </div>
-                                    </div> {/* End of Key-Value List */}
+                                        <div>
+                                            <span className="block text-[11px] font-medium text-gray-500 mb-1 uppercase tracking-wider">Start Date</span>
+                                            <span className="block text-sm font-semibold text-gray-900">
+                                                {enrollment.startDate ? new Date(enrollment.startDate).toLocaleDateString() : '-'}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-[11px] font-medium text-gray-500 mb-1 uppercase tracking-wider">Transport</span>
+                                            <span className="block text-sm font-semibold text-gray-900">{enrollment.transport ? 'Yes' : 'No'}</span>
+                                        </div>
+                                    </div>
 
                                     {/* Fee Configuration Section */}
                                     <div className="mt-2 pt-4 border-t border-gray-200/60">
-                                        <div className="text-sm font-semibold text-gray-900 mb-3">Fee Configuration</div>
+                                        <div className="text-sm font-semibold text-gray-900 mb-3">Assigned Fee Package</div>
 
                                         {enrollment.feePackageId ? (
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-blue-50/50 border border-blue-100">
-                                                <div className="flex flex-col">
-                                                    <div className="flex items-center gap-2.5 mb-1">
-                                                        <div className="bg-blue-100/80 text-blue-700 p-1.5 rounded-lg shadow-sm">
-                                                            <Receipt className="w-4 h-4" />
-                                                        </div>
-                                                        <span className="font-semibold text-gray-900">
-                                                            {feePackages.find(p => p.id === enrollment.feePackageId)?.name || 'Assigned Package'}
+                                            <div className="flex items-center justify-between gap-4 p-3 rounded-xl bg-blue-50/50 border border-blue-100">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-blue-100/80 text-blue-700 p-2 rounded-lg shadow-sm">
+                                                        <Receipt className="w-4 h-4" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-bold text-blue-900">
+                                                            {feePackages.find(p => p.id === enrollment.feePackageId)?.name || 'Configured Package'}
+                                                        </span>
+                                                        <span className="text-xs text-blue-700/70 font-medium mt-0.5">
+                                                            Assigned {enrollment.feePackageAssignedAt ? new Date(enrollment.feePackageAssignedAt).toLocaleDateString() : 'Unknown'}
                                                         </span>
                                                     </div>
-                                                    <span className="text-xs text-gray-500 ml-9">
-                                                        Assigned {enrollment.feePackageAssignedAt ? new Date(enrollment.feePackageAssignedAt).toLocaleDateString() : 'Unknown'}
-                                                    </span>
                                                 </div>
-                                                <div className="flex flex-wrap items-center gap-2 ml-9 sm:ml-0">
+                                                <div className="shrink-0 mt-2 sm:mt-0">
                                                     <FeePreviewModule
                                                         enrollmentId={enrollment.id}
                                                         studentId={student.id}
                                                         feePackageName={feePackages.find(p => p.id === enrollment.feePackageId)?.name}
                                                     />
-                                                    <AssignFeeModal
-                                                        enrollmentId={enrollment.id}
-                                                        studentId={student.id}
-                                                        isNewStudent={enrollment.isNewStudent}
-                                                        availablePackages={feePackages.filter(p => p.level === enrollment.enrollmentLevel &&
-                                                            (p.programType === 'FULL_DAY' && enrollment.programType === 'FULL_DAY' ||
-                                                                p.programType === 'HALF_DAY_EXTENDED' && (enrollment.programType === 'MORNING_STAY_BACK' || enrollment.programType === 'AFTERNOON_STAY_BACK') ||
-                                                                p.programType === 'HALF_DAY' && (enrollment.programType === 'HALF_DAY_MORNING' || enrollment.programType === 'HALF_DAY_AFTERNOON'))
-                                                        )}
-                                                    />
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="bg-amber-50/50 border border-amber-200/70 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                                <div className="flex items-center gap-2.5">
-                                                    <div className="bg-amber-100 text-amber-700 p-1.5 rounded-lg shadow-sm">
+                                            <div className="bg-amber-50/50 border border-amber-200/70 rounded-xl p-3 flex items-center justify-between gap-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-amber-100/80 text-amber-700 p-2 rounded-lg shadow-sm">
                                                         <AlertCircle className="w-4 h-4" />
                                                     </div>
-                                                    <span className="text-sm font-medium text-amber-900">No fee package assigned</span>
-                                                </div>
-                                                <div className="ml-9 sm:ml-0">
-                                                    <AssignFeeModal
-                                                        enrollmentId={enrollment.id}
-                                                        studentId={student.id}
-                                                        isNewStudent={enrollment.isNewStudent}
-                                                        availablePackages={feePackages.filter(p => p.level === enrollment.enrollmentLevel &&
-                                                            (p.programType === 'FULL_DAY' && enrollment.programType === 'FULL_DAY' ||
-                                                                p.programType === 'HALF_DAY_EXTENDED' && (enrollment.programType === 'MORNING_STAY_BACK' || enrollment.programType === 'AFTERNOON_STAY_BACK') ||
-                                                                p.programType === 'HALF_DAY' && (enrollment.programType === 'HALF_DAY_MORNING' || enrollment.programType === 'HALF_DAY_AFTERNOON'))
-                                                        )}
-                                                    />
+                                                    <span className="text-sm font-medium text-amber-900">No fee package assigned. Packages are automatically assigned upon enrollment.</span>
                                                 </div>
                                             </div>
                                         )}

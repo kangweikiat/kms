@@ -3,6 +3,7 @@
 import { prisma, EnrollmentLevel, ProgramType, EnrollmentStatus, LanguageClass } from '@kms/database'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { generateInstancesForEnrollment } from '../payments/actions'
 
 function determineProgramType(formData: FormData): ProgramType {
     const category = formData.get('programCategory') as string
@@ -17,7 +18,7 @@ function determineProgramType(formData: FormData): ProgramType {
     if (session === 'MORNING') {
         return stayBack ? ProgramType.MORNING_STAY_BACK : ProgramType.HALF_DAY_MORNING
     } else {
-        return stayBack ? ProgramType.AFTERNOON_STAY_BACK : ProgramType.HALF_DAY_AFTERNOON
+        return ProgramType.HALF_DAY_AFTERNOON
     }
 }
 
@@ -78,24 +79,69 @@ function extractEnrollmentData(formData: FormData) {
     }
 }
 
+async function autoAssignFeePackage(enrollmentId: string, enrollmentData: any) {
+    const yearOpt = await prisma.academicYear.findUnique({
+        where: { year: enrollmentData.academicYear }
+    });
+
+    if (!yearOpt) return false;
+
+    let searchType = 'HALF_DAY';
+    if (enrollmentData.programType === 'FULL_DAY') searchType = 'FULL_DAY';
+    else if (enrollmentData.programType.includes('STAY_BACK')) searchType = 'HALF_DAY_EXTENDED';
+
+    const matchingPackage = await prisma.feePackage.findFirst({
+        where: {
+            level: enrollmentData.enrollmentLevel,
+            academicYearId: yearOpt.id,
+            programType: searchType as any,
+            isActive: true
+        }
+    });
+
+    if (matchingPackage) {
+        const currentEnrollment = await prisma.enrollment.findUnique({ where: { id: enrollmentId } });
+        if (currentEnrollment?.feePackageId !== matchingPackage.id) {
+            await prisma.enrollment.update({
+                where: { id: enrollmentId },
+                data: {
+                    feePackageId: matchingPackage.id,
+                    feePackageAssignedAt: new Date()
+                }
+            });
+        }
+
+        await generateInstancesForEnrollment(enrollmentId);
+        return true;
+    }
+
+    return false;
+}
+
 export async function createStudent(prevState: any, formData: FormData) {
     const fields = Object.fromEntries(formData.entries()) as Record<string, string>
     const studentData = extractStudentData(formData)
     const enrollmentData = extractEnrollmentData(formData)
 
     try {
+        let newEnrollmentId: string | null = null;
         await prisma.$transaction(async (tx) => {
             const student = await tx.student.create({
                 data: studentData
             })
 
-            await tx.enrollment.create({
+            const enrollment = await tx.enrollment.create({
                 data: {
                     ...enrollmentData,
                     studentId: student.id
                 }
             })
+            newEnrollmentId = enrollment.id;
         })
+
+        if (newEnrollmentId) {
+            await autoAssignFeePackage(newEnrollmentId, enrollmentData);
+        }
 
         revalidatePath('/admin/students')
     } catch (error) {
@@ -123,7 +169,19 @@ export async function updateStudent(id: string, prevState: any, formData: FormDa
     const enrollmentData = extractEnrollmentData(formData)
 
     try {
-        await prisma.$transaction(async (tx) => {
+        const existingEnrollment = await prisma.enrollment.findUnique({
+            where: {
+                studentId_academicYear: {
+                    studentId: id,
+                    academicYear: enrollmentData.academicYear
+                }
+            }
+        });
+
+        const programChanged = existingEnrollment && existingEnrollment.programType !== enrollmentData.programType;
+        const { programType: newProgramType, ...enrollmentUpdateData } = enrollmentData;
+
+        const result = await prisma.$transaction(async (tx) => {
             await tx.student.update({
                 where: { id },
                 data: studentData
@@ -131,20 +189,55 @@ export async function updateStudent(id: string, prevState: any, formData: FormDa
 
             // Upsert enrollment based on the year provided in the form
             // This ensures we update the CORRECT enrollment year, or create it if missing
-            await tx.enrollment.upsert({
+            return await tx.enrollment.upsert({
                 where: {
                     studentId_academicYear: {
                         studentId: id,
                         academicYear: enrollmentData.academicYear
                     }
                 },
-                update: enrollmentData,
+                update: programChanged ? enrollmentUpdateData : enrollmentData,
                 create: {
                     ...enrollmentData,
                     studentId: id
                 }
             })
-        })
+        });
+
+        if (!existingEnrollment) {
+            await autoAssignFeePackage(result.id, enrollmentData);
+        } else if (programChanged) {
+            const { changeProgrammeWorkflow } = await import('./program-actions');
+
+            const yearOpt = await prisma.academicYear.findUnique({
+                where: { year: enrollmentData.academicYear }
+            });
+
+            let toFeePackageId = undefined;
+            if (yearOpt) {
+                let searchType = 'HALF_DAY';
+                if (newProgramType === 'FULL_DAY') searchType = 'FULL_DAY';
+                else if ((newProgramType as string).includes('STAY_BACK')) searchType = 'HALF_DAY_EXTENDED';
+
+                const matchingPackage = await prisma.feePackage.findFirst({
+                    where: {
+                        level: enrollmentData.enrollmentLevel,
+                        academicYearId: yearOpt.id,
+                        programType: searchType as any,
+                        isActive: true
+                    }
+                });
+                toFeePackageId = matchingPackage?.id;
+            }
+
+            await changeProgrammeWorkflow({
+                enrollmentId: result.id,
+                toProgramType: newProgramType as any,
+                effectiveMonth: new Date().getMonth() + 1,
+                toFeePackageId: toFeePackageId,
+                reason: "Program change via Student Edit",
+            });
+        }
 
         revalidatePath('/admin/students')
         revalidatePath(`/admin/students/${id}`)
@@ -219,40 +312,40 @@ export async function hardDeleteStudent(id: string, year: number) {
             return { message: 'Enrollment not found or not in a withdrawable state.' };
         }
 
-        // 1.5 Delete the fee adjustments associated with this enrollment
-        await prisma.enrollmentFeeAdjustment.deleteMany({
-            where: {
-                enrollmentId: enrollment.id
-            }
-        });
+        // 1. Delete all child relations attached to this specific enrollment first (Cascading manual delete)
+        await prisma.$transaction([
+            // Payments
+            prisma.payment.deleteMany({ where: { enrollmentId: enrollment.id } }),
 
-        // 1. Delete the specific enrollment
-        await prisma.enrollment.delete({
-            where: {
-                id: enrollment.id
-            }
-        });
+            // Financial Instances
+            prisma.monthlyFeeInstance.deleteMany({ where: { enrollmentId: enrollment.id } }),
+            prisma.bookInstance.deleteMany({ where: { enrollmentId: enrollment.id } }),
+            prisma.miscFee.deleteMany({ where: { enrollmentId: enrollment.id } }),
 
-        // 2. Check if student has any other enrollments
+            // Meta updates
+            prisma.enrollmentProgramChange.deleteMany({ where: { enrollmentId: enrollment.id } }),
+            prisma.enrollmentFeeAdjustment.deleteMany({ where: { enrollmentId: enrollment.id } }),
+
+            // 2. Finally delete the specific enrollment
+            prisma.enrollment.delete({ where: { id: enrollment.id } })
+        ]);
+
+        // 3. Check if student has any other enrollments
         const remainingEnrollments = await prisma.enrollment.count({
             where: {
                 studentId: id
             }
         });
 
-        // 3. If no other enrollments, delete the student entirely
+        // 4. If no other enrollments exist across ANY year, delete the entire student profile
         if (remainingEnrollments === 0) {
-            // We might need to delete related records first if cascade isn't set up, 
-            // but Prisma schema usually handles this if relations are optional or cascade delete is configured in DB.
-            // Based on schema, relations are optional or simple. 
-            // However, fees and attendance might exist. 
-            // For a "wrongly enrolled" student, these should likely be empty or we should delete them.
-            // Let's safe delete:
-            await prisma.fee.deleteMany({ where: { studentId: id } });
-            await prisma.attendance.deleteMany({ where: { studentId: id } });
-            await prisma.student.delete({
-                where: { id }
-            });
+            await prisma.$transaction([
+                prisma.fee.deleteMany({ where: { studentId: id } }),
+                prisma.attendance.deleteMany({ where: { studentId: id } }),
+                prisma.student.delete({
+                    where: { id }
+                })
+            ]);
         }
 
         revalidatePath('/admin/students')
@@ -280,13 +373,19 @@ export async function enrollStudent(studentId: string, prevState: any, formData:
             return { error: `Student is already enrolled for the ${enrollmentData.academicYear} academic year.` }
         }
 
-        await prisma.enrollment.create({
+        let newEnrollmentId: string | null = null;
+        const enrollment = await prisma.enrollment.create({
             data: {
                 ...enrollmentData,
                 studentId,
                 isNewStudent: false
             }
         })
+        newEnrollmentId = enrollment.id;
+
+        if (newEnrollmentId) {
+            await autoAssignFeePackage(newEnrollmentId, enrollmentData);
+        }
     } catch (error) {
         console.error('Failed to enroll student:', error)
         // Check for unique constraint violation as a fallback
@@ -307,13 +406,22 @@ export async function assignFeePackage(enrollmentId: string, feePackageId: strin
             where: { enrollmentId }
         });
 
+        // Also wipe any old instances linked directly to the enrollment so we can regenerate them fresh
+        await prisma.monthlyFeeInstance.deleteMany({ where: { enrollmentId } });
+        await prisma.bookInstance.deleteMany({ where: { enrollmentId } });
+        await prisma.miscFee.deleteMany({ where: { enrollmentId } });
+
         await prisma.enrollment.update({
             where: { id: enrollmentId },
             data: {
                 feePackageId,
                 feePackageAssignedAt: new Date(),
             }
-        })
+        });
+
+        // Autogenerate payment tracking instances once assigned
+        await generateInstancesForEnrollment(enrollmentId);
+
         revalidatePath(`/admin/students/${studentId}`)
         return { success: true }
     } catch (error) {

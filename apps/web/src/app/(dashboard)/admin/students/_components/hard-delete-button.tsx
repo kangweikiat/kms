@@ -48,7 +48,7 @@ export function HardDeleteButton({ id, year, redirectTo }: HardDeleteButtonProps
             <ConfirmDialog
                 isOpen={isOpen}
                 title="Permanently Delete Student?"
-                description={`This action cannot be undone. This will permanently remove the student's enrollment for ${year}. Warning: If this is the student's only enrollment, their entire record (including personal details) will be deleted.`}
+                description={`This action cannot be undone. This will permanently remove the student's entire profile, including all historical enrollments, generated fees, invoices, and payments. Everything related to this student will be wiped.`}
                 confirmText={isPending ? "Deleting..." : "Permanently Delete"}
                 variant="danger"
                 onConfirm={handleDelete}

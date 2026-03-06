@@ -2,6 +2,7 @@
 
 import { prisma } from '@kms/database'
 import { revalidatePath } from 'next/cache'
+import { generateInstancesForEnrollment } from '../payments/actions'
 
 export async function getFeePreviewData(enrollmentId: string) {
     try {
@@ -135,6 +136,9 @@ export async function upsertFeeAdjustment(enrollmentId: string, feeItemId: strin
             }
         })
 
+        // Re-sync instances automatically so dashboard totals and payments update
+        await generateInstancesForEnrollment(enrollmentId)
+
         revalidatePath(`/admin/students/${studentId}`)
         return { success: true }
     } catch (e: any) {
@@ -144,9 +148,17 @@ export async function upsertFeeAdjustment(enrollmentId: string, feeItemId: strin
 
 export async function removeFeeAdjustment(adjustmentId: string, studentId: string) {
     try {
+        const adjustment = await prisma.enrollmentFeeAdjustment.findUnique({
+            where: { id: adjustmentId }
+        })
+
         await prisma.enrollmentFeeAdjustment.delete({
             where: { id: adjustmentId }
         })
+
+        if (adjustment) {
+            await generateInstancesForEnrollment(adjustment.enrollmentId)
+        }
 
         revalidatePath(`/admin/students/${studentId}`)
         return { success: true }
