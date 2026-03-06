@@ -7,6 +7,8 @@ import { LogPaymentModal } from './_components/log-payment-modal'
 import { AddAdhocChargeModal } from './_components/add-adhoc-charge-modal'
 import { LogLumpsumPaymentModal } from './_components/log-lumpsum-payment-modal'
 
+import { AdjustMonthlyFeesModal } from './_components/adjust-monthly-fees-modal'
+
 export default async function StudentPaymentDetailsPage(props: {
     params: Promise<{ enrollmentId: string }>
 }) {
@@ -25,6 +27,7 @@ export default async function StudentPaymentDetailsPage(props: {
     const renderStatusBadge = (status: PaymentStatusEnum) => {
         if (status === 'PAID') return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800"><CheckCircle2 className="w-3.5 h-3.5" /> PAID</span>
         if (status === 'PARTIAL') return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800"><Clock className="w-3.5 h-3.5" /> PARTIAL</span>
+        if (status === 'WAIVED') return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800"><CheckCircle2 className="w-3.5 h-3.5" /> WAIVED</span>
         return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800"><Clock className="w-3.5 h-3.5" /> UNPAID</span>
     }
 
@@ -38,13 +41,13 @@ export default async function StudentPaymentDetailsPage(props: {
     if (enrollment.monthlyFeeInstances.length > 0) {
         const firstMonth = enrollment.monthlyFeeInstances[0].month;
         const firstMonthInstances = enrollment.monthlyFeeInstances.filter((m: any) => m.month === firstMonth);
-        if (firstMonthInstances.some((m: any) => m.status !== 'PAID')) {
+        if (firstMonthInstances.some((m: any) => m.status !== 'PAID' && m.status !== 'WAIVED')) {
             disableLumpsum = false;
         }
     }
 
     // Check startup fees
-    if (startupFees.some((m: any) => m.status !== 'PAID')) {
+    if (startupFees.some((m: any) => m.status !== 'PAID' && m.status !== 'WAIVED')) {
         disableLumpsum = false;
     }
 
@@ -75,7 +78,7 @@ export default async function StudentPaymentDetailsPage(props: {
                 </div>
                 <div className="flex items-center gap-4">
                     {renderStatusBadge(misc.status)}
-                    {misc.status !== 'PAID' && (
+                    {misc.status !== 'PAID' && misc.status !== 'WAIVED' && (
                         <LogPaymentModal
                             enrollmentId={enrollment.id}
                             miscFeeId={misc.id}
@@ -137,8 +140,12 @@ export default async function StudentPaymentDetailsPage(props: {
 
                 {/* MONTHLY FEES */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-gray-900">Monthly Fees</h2>
+                        <AdjustMonthlyFeesModal
+                            enrollmentId={enrollment.id}
+                            monthlyFeeInstances={enrollment.monthlyFeeInstances}
+                        />
                     </div>
                     <div className="divide-y divide-gray-100">
                         {enrollment.monthlyFeeInstances.length === 0 && <div className="p-6 text-gray-500 text-sm">No items found.</div>}

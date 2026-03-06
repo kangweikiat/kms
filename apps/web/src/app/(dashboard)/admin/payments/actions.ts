@@ -544,3 +544,177 @@ export async function logLumpsumPayment(data: {
         return { success: false, error: error.message };
     }
 }
+
+export async function applyMonthlyFeeAdjustment({
+    enrollmentId,
+    feeItemCode = "MONTHLY_FEE",
+    months,
+    type,
+    percent,
+    fixedAmount,
+    reason,
+    adjustedBy
+}: {
+    enrollmentId: string;
+    feeItemCode?: string;
+    months: number[];
+    type: "WAIVE" | "PERCENT" | "FIXED_AMOUNT";
+    percent?: number;
+    fixedAmount?: number;
+    reason: string;
+    adjustedBy?: string;
+}) {
+    try {
+        const feeItem = await prisma.feeItem.findUnique({
+            where: { code: feeItemCode }
+        });
+
+        if (!feeItem) throw new Error(`FeeItem ${feeItemCode} not found.`);
+
+        const validMonths = months.map(m => Number(m));
+
+        const instances = await prisma.monthlyFeeInstance.findMany({
+            where: {
+                enrollmentId,
+                feeItemId: feeItem.id,
+                month: { in: validMonths }
+            },
+            include: { payments: true }
+        });
+
+        const adjustedMonths: Record<number, number> = {};
+        const lockedMonths: number[] = [];
+
+        await prisma.$transaction(async (tx) => {
+            const updatePromises = [];
+            for (const instance of instances) {
+                if (instance.payments.length > 0) {
+                    lockedMonths.push(instance.month);
+                    continue;
+                }
+
+                const originalAmountDue = instance.originalAmountDue ?? instance.amountDue;
+                let newAmountDue = originalAmountDue;
+                let newStatus = instance.status === "UNPAID" ? instance.status : "UNPAID"; // Default re-calc if reverting waived
+
+                if (type === "WAIVE") {
+                    newAmountDue = 0;
+                    newStatus = 'WAIVED' as any; // Cast for Prisma schema extension safely
+                } else if (type === "PERCENT") {
+                    if (percent === undefined) throw new Error("Percent is required for PERCENT adjustment");
+                    newAmountDue = Math.round((originalAmountDue * (percent / 100)) * 100) / 100;
+                    newStatus = 'UNPAID' as any;
+                } else if (type === "FIXED_AMOUNT") {
+                    if (fixedAmount === undefined) throw new Error("Fixed amount is required for FIXED_AMOUNT adjustment");
+                    newAmountDue = fixedAmount;
+                    newStatus = 'UNPAID' as any;
+                }
+
+                updatePromises.push(
+                    tx.monthlyFeeInstance.update({
+                        where: { id: instance.id },
+                        data: {
+                            originalAmountDue,
+                            amountDue: newAmountDue,
+                            status: newStatus as any,
+                            adjustmentType: type as any,
+                            adjustmentPercent: type === "PERCENT" ? percent : null,
+                            adjustmentFixedAmount: type === "FIXED_AMOUNT" ? fixedAmount : null,
+                            adjustmentReason: reason,
+                            adjustedAt: new Date(),
+                            adjustedBy
+                        }
+                    })
+                );
+
+                adjustedMonths[instance.month] = newAmountDue;
+            }
+            await Promise.all(updatePromises);
+        }, { maxWait: 5000, timeout: 20000 });
+
+        revalidatePath(`/admin/payments`);
+        revalidatePath(`/admin/payments/${enrollmentId}`);
+
+        return { success: true, adjustedMonths, lockedMonths };
+    } catch (error: any) {
+        console.error('applyMonthlyFeeAdjustment error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function restoreMonthlyFeeAmount({
+    enrollmentId,
+    feeItemCode = "MONTHLY_FEE",
+    months,
+    reason,
+    adjustedBy
+}: {
+    enrollmentId: string;
+    feeItemCode?: string;
+    months: number[];
+    reason: string;
+    adjustedBy?: string;
+}) {
+    try {
+        const feeItem = await prisma.feeItem.findUnique({
+            where: { code: feeItemCode }
+        });
+
+        if (!feeItem) throw new Error(`FeeItem ${feeItemCode} not found.`);
+
+        const validMonths = months.map(m => Number(m));
+
+        const instances = await prisma.monthlyFeeInstance.findMany({
+            where: {
+                enrollmentId,
+                feeItemId: feeItem.id,
+                month: { in: validMonths }
+            },
+            include: { payments: true }
+        });
+
+        const restoredMonths: number[] = [];
+        const lockedMonths: number[] = [];
+
+        await prisma.$transaction(async (tx) => {
+            const updatePromises = [];
+            for (const instance of instances) {
+                if (instance.payments.length > 0) {
+                    lockedMonths.push(instance.month);
+                    continue;
+                }
+
+                if (instance.originalAmountDue === null) {
+                    continue; // Nothing to restore
+                }
+
+                updatePromises.push(
+                    tx.monthlyFeeInstance.update({
+                        where: { id: instance.id },
+                        data: {
+                            amountDue: instance.originalAmountDue,
+                            status: 'UNPAID' as any,
+                            adjustmentType: null,
+                            adjustmentPercent: null,
+                            adjustmentFixedAmount: null,
+                            adjustmentReason: `RESTORED: ${reason}`,
+                            adjustedAt: new Date(),
+                            adjustedBy
+                        }
+                    })
+                );
+
+                restoredMonths.push(instance.month);
+            }
+            await Promise.all(updatePromises);
+        }, { maxWait: 5000, timeout: 20000 });
+
+        revalidatePath(`/admin/payments`);
+        revalidatePath(`/admin/payments/${enrollmentId}`);
+
+        return { success: true, restoredMonths, lockedMonths };
+    } catch (error: any) {
+        console.error('restoreMonthlyFeeAmount error:', error);
+        return { success: false, error: error.message };
+    }
+}

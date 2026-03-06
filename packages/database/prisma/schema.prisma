@@ -337,6 +337,13 @@ enum PaymentStatusEnum {
   UNPAID
   PARTIAL
   PAID
+  WAIVED
+}
+
+enum MonthlyFeeAdjustmentType {
+  WAIVE
+  PERCENT
+  FIXED_AMOUNT
 }
 
 model Payment {
@@ -372,6 +379,14 @@ model MonthlyFeeInstance {
   month        Int      // 1 = Jan, 2 = Feb, ...
   status       PaymentStatusEnum @default(UNPAID)
   amountDue    Float    // Snapshotted price after any adjustments
+
+  originalAmountDue     Float?
+  adjustmentType        MonthlyFeeAdjustmentType?
+  adjustmentPercent     Float?
+  adjustmentFixedAmount Float?
+  adjustmentReason      String?
+  adjustedAt            DateTime?
+  adjustedBy            String?
 
   payments     Payment[]
 
