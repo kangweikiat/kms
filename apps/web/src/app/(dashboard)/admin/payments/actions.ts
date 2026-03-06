@@ -593,7 +593,7 @@ export async function applyMonthlyFeeAdjustment({
                     continue;
                 }
 
-                const originalAmountDue = instance.originalAmountDue ?? instance.amountDue;
+                const originalAmountDue = (instance as any).originalAmountDue ?? instance.amountDue;
                 let newAmountDue = originalAmountDue;
                 let newStatus = instance.status === "UNPAID" ? instance.status : "UNPAID"; // Default re-calc if reverting waived
 
@@ -684,7 +684,7 @@ export async function restoreMonthlyFeeAmount({
                     continue;
                 }
 
-                if (instance.originalAmountDue === null) {
+                if ((instance as any).originalAmountDue === null) {
                     continue; // Nothing to restore
                 }
 
@@ -692,7 +692,7 @@ export async function restoreMonthlyFeeAmount({
                     tx.monthlyFeeInstance.update({
                         where: { id: instance.id },
                         data: {
-                            amountDue: instance.originalAmountDue,
+                            amountDue: (instance as any).originalAmountDue,
                             status: 'UNPAID' as any,
                             adjustmentType: null,
                             adjustmentPercent: null,
