@@ -623,7 +623,7 @@ export async function applyMonthlyFeeAdjustment({
                             adjustmentReason: reason,
                             adjustedAt: new Date(),
                             adjustedBy
-                        }
+                        } as any
                     })
                 );
 
@@ -700,7 +700,7 @@ export async function restoreMonthlyFeeAmount({
                             adjustmentReason: `RESTORED: ${reason}`,
                             adjustedAt: new Date(),
                             adjustedBy
-                        }
+                        } as any
                     })
                 );
 
