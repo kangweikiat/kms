@@ -141,6 +141,37 @@ export async function logPayment(data: {
 }) {
     try {
         await prisma.$transaction(async (tx) => {
+            // 0. Generate receipt
+            const year = new Date().getFullYear();
+            
+            let prefix = 'CSH';
+            let sequenceKey = `RECEIPT_CASH_${year}`;
+            
+            if (data.method === PaymentMethodEnum.ONLINE_TRANSFER || (data.method as any) === 'BANK_TRANSFER') {
+                prefix = 'ONL';
+                sequenceKey = `RECEIPT_ONLINE_${year}`;
+            } else if (data.method === PaymentMethodEnum.TNG || (data.method as any) === 'ONLINE') {
+                prefix = 'TNG';
+                sequenceKey = `RECEIPT_TNG_${year}`;
+            }
+
+            const sequence = await tx.appSequence.upsert({
+                where: { key: sequenceKey },
+                create: { key: sequenceKey, value: 1 },
+                update: { value: { increment: 1 } }
+            });
+            const receiptNo = `REC${prefix}${year}${sequence.value.toString().padStart(4, '0')}`;
+
+            const receipt = await tx.receipt.create({
+                data: {
+                    receiptNo,
+                    enrollmentId: data.enrollmentId,
+                    amount: data.amountPaid,
+                    paymentDate: new Date(),
+                    paymentMethod: data.method
+                }
+            });
+
             // 1. Create the payment
             const payment = await tx.payment.create({
                 data: {
@@ -151,7 +182,8 @@ export async function logPayment(data: {
                     paidAt: new Date(),
                     monthlyFeeInstanceId: data.monthlyFeeInstanceId,
                     bookInstanceId: data.bookInstanceId,
-                    miscFeeId: data.miscFeeId
+                    miscFeeId: data.miscFeeId,
+                    receiptId: receipt.id
                 }
             });
 
@@ -383,6 +415,18 @@ export async function getEnrollmentPaymentDetails(enrollmentId: string) {
                     include: {
                         payments: { orderBy: { createdAt: 'desc' } }
                     }
+                },
+                receipts: {
+                    orderBy: { createdAt: 'desc' },
+                    include: {
+                        payments: {
+                            include: {
+                                monthlyFeeInstance: { include: { feeItem: true, payments: true } },
+                                miscFee: { include: { payments: true } },
+                                bookInstance: { include: { feeItem: true, payments: true } }
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -488,6 +532,37 @@ export async function logLumpsumPayment(data: {
         await prisma.$transaction(async (tx) => {
             const operations = [];
 
+            // 0. Generate receipt
+            const year = new Date().getFullYear();
+            
+            let prefix = 'CSH';
+            let sequenceKey = `RECEIPT_CASH_${year}`;
+            
+            if (data.method === PaymentMethodEnum.ONLINE_TRANSFER || (data.method as any) === 'BANK_TRANSFER') {
+                prefix = 'ONL';
+                sequenceKey = `RECEIPT_ONLINE_${year}`;
+            } else if (data.method === PaymentMethodEnum.TNG || (data.method as any) === 'ONLINE') {
+                prefix = 'TNG';
+                sequenceKey = `RECEIPT_TNG_${year}`;
+            }
+
+            const sequence = await tx.appSequence.upsert({
+                where: { key: sequenceKey },
+                create: { key: sequenceKey, value: 1 },
+                update: { value: { increment: 1 } }
+            });
+            const receiptNo = `REC${prefix}${year}${sequence.value.toString().padStart(4, '0')}`;
+
+            const receipt = await tx.receipt.create({
+                data: {
+                    receiptNo,
+                    enrollmentId: data.enrollmentId,
+                    amount: data.amountPaid,
+                    paymentDate: new Date(),
+                    paymentMethod: data.method
+                }
+            });
+
             for (const item of payableItems) {
                 if (remainingAmount <= 0) break;
 
@@ -505,6 +580,7 @@ export async function logLumpsumPayment(data: {
                             paidAt: new Date(),
                             monthlyFeeInstanceId: item.type === 'MONTHLY' ? item.id : null,
                             miscFeeId: item.type === 'MISC' ? item.id : null,
+                            receiptId: receipt.id
                         }
                     })
                 );

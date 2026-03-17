@@ -15,7 +15,7 @@ export function LogLumpsumPaymentModal({
 }) {
     const [open, setOpen] = useState(false)
     const [amount, setAmount] = useState<number>('' as any)
-    const [method, setMethod] = useState<'CASH' | 'BANK_TRANSFER' | 'ONLINE'>('CASH')
+    const [method, setMethod] = useState<'CASH' | 'ONLINE_TRANSFER' | 'TNG'>('CASH')
     const [note, setNote] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
     const router = useRouter()
@@ -98,8 +98,8 @@ export function LogLumpsumPaymentModal({
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                                 >
                                     <option value="CASH">Cash</option>
-                                    <option value="BANK_TRANSFER">Bank Transfer</option>
-                                    <option value="ONLINE">Online Payment / Stripe</option>
+                                    <option value="ONLINE_TRANSFER">Online Transfer</option>
+                                    <option value="TNG">TnG</option>
                                 </select>
                             </div>
 

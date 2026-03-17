@@ -9,6 +9,7 @@ import { LogLumpsumPaymentModal } from './_components/log-lumpsum-payment-modal'
 import { AdjustMonthlyFeesModal } from './_components/adjust-monthly-fees-modal'
 import { CancelPaymentButton } from './_components/cancel-payment-button'
 import { DeleteMiscFeeButton } from './_components/delete-misc-fee-button'
+import { DownloadReceiptButton } from './_components/download-receipt-button'
 
 export default async function StudentPaymentDetailsPage(props: {
     params: Promise<{ enrollmentId: string }>
@@ -51,6 +52,33 @@ export default async function StudentPaymentDetailsPage(props: {
     if (startupFees.some((m: any) => m.status !== 'PAID' && m.status !== 'WAIVED')) {
         disableLumpsum = false;
     }
+
+    // Calculate contextual outstanding balances
+    let startupOutstanding = 0;
+    let monthlyOutstanding = 0;
+    let miscOutstanding = 0;
+
+    // 1. Monthly fees
+    enrollment.monthlyFeeInstances.forEach((m: any) => {
+        const paid = m.payments.reduce((s: number, p: any) => s + p.amountPaid, 0);
+        monthlyOutstanding += Math.max(0, m.amountDue - paid);
+    });
+
+    // 2. Book instances (Startup)
+    enrollment.bookInstances.forEach((m: any) => {
+        const paid = m.payments.reduce((s: number, p: any) => s + p.amountPaid, 0);
+        startupOutstanding += Math.max(0, m.amountDue - paid);
+    });
+
+    // 3. Misc fees (Startup vs Adhoc)
+    enrollment.miscFees.forEach((m: any) => {
+        const paid = m.payments.reduce((s: number, p: any) => s + p.amountPaid, 0);
+        if (m.isAdhoc) {
+            miscOutstanding += Math.max(0, m.amountDue - paid);
+        } else {
+            startupOutstanding += Math.max(0, m.amountDue - paid);
+        }
+    });
 
     const renderMiscFee = (misc: any) => {
         const paid = misc.payments.reduce((s: number, p: any) => s + p.amountPaid, 0)
@@ -124,6 +152,61 @@ export default async function StudentPaymentDetailsPage(props: {
             </div>
 
             <div className="space-y-6">
+                {/* RECEIPTS HISTORY */}
+                {enrollment.receipts && enrollment.receipts.length > 0 && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-900">Receipts History</h2>
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                            {enrollment.receipts.map((receipt: any) => {
+                                let hasStartup = false;
+                                let hasMonthly = false;
+                                let hasMisc = false;
+
+                                receipt.payments.forEach((p: any) => {
+                                    if (p.bookInstanceId || (p.miscFee && !p.miscFee.isAdhoc)) {
+                                        hasStartup = true;
+                                    }
+                                    if (p.monthlyFeeInstanceId) {
+                                        hasMonthly = true;
+                                    }
+                                    if (p.miscFee && p.miscFee.isAdhoc) {
+                                        hasMisc = true;
+                                    }
+                                });
+
+                                // Removed the displayBalance because the PDF takes care of it natively through historical snapshots now
+
+                                return (
+                                    <div key={receipt.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div className="flex-1">
+                                            <div className="font-semibold text-gray-900">{receipt.receiptNo}</div>
+                                            <div className="text-sm text-gray-500 mt-1 flex flex-wrap gap-4 items-center">
+                                                <span>Date: {new Date(receipt.paymentDate).toLocaleDateString()}</span>
+                                                <span>Method: {receipt.paymentMethod}</span>
+                                                <span className="font-medium text-gray-900">Total: {formatCurrency(receipt.amount)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <DownloadReceiptButton 
+                                                receiptNo={receipt.receiptNo} 
+                                                receiptDetails={{
+                                                    ...receipt,
+                                                    studentName: student.name,
+                                                    enrollmentLevel: enrollment.enrollmentLevel,
+                                                    programType: enrollment.programType
+                                                }} 
+                                                enrollment={enrollment}
+                                            />
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {/* STARTUP FEES */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
