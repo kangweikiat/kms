@@ -166,7 +166,8 @@ export function DownloadReceiptButton({ receiptNo, receiptDetails, enrollment }:
                 });
 
                 enrollment.miscFees?.forEach((mf: any) => {
-                    if (new Date(mf.createdAt).getTime() <= new Date(receiptDetails.createdAt).getTime()) {
+                    const mfCreatedTime = mf.createdAt ? new Date(mf.createdAt).getTime() : new Date(enrollment.createdAt).getTime();
+                    if (mfCreatedTime <= new Date(receiptDetails.createdAt).getTime()) {
                         if (mf.isAdhoc) {
                             historicalMiscDue += mf.amountDue;
                             const paid = mf.payments.filter(isHistoricalOrCurrentPayment).reduce((s:number, p:any) => s + p.amountPaid, 0);
