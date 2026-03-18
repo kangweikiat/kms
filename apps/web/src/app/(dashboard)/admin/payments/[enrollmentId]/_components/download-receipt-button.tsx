@@ -133,7 +133,8 @@ export function DownloadReceiptButton({ receiptNo, receiptDetails, enrollment }:
                         cat = 'STARTUP'
                     }
                     detail = p.miscFee.name
-                    if (p.note) detail = `${p.miscFee.name} (${p.note})`
+                    const needsSize = n.includes('UNIFORM') || n.includes('PE ATTIRE')
+                    if (p.note && needsSize) detail = `${p.miscFee.name} (${p.note})`
                     const totalPaidForInstance = p.miscFee.payments
                         .filter(isHistoricalOrCurrentPayment)
                         .reduce((sum: number, pp: any) => sum + pp.amountPaid, 0)

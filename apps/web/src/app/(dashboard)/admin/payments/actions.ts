@@ -423,7 +423,8 @@ export async function logLumpsumPayment(data: {
     amountPaid: number;
     method: PaymentMethodEnum;
     note?: string;
-    itemNotes?: Record<string, string>; // miscFeeId -> note (e.g. size)
+    itemNotes?: Record<string, string>; // itemId -> note (e.g. size)
+    selectedItemIds?: string[];          // if provided, only pay these items
 }) {
     try {
         if (data.amountPaid <= 0) {
@@ -505,13 +506,18 @@ export async function logLumpsumPayment(data: {
         // Sort by priority (1 to 4)
         payableItems.sort((a, b) => a.priority - b.priority);
 
+        // If specific items are selected, filter to only those (preserving priority order)
+        const itemsToProcess = data.selectedItemIds && data.selectedItemIds.length > 0
+            ? payableItems.filter(item => data.selectedItemIds!.includes(item.id))
+            : payableItems;
+
         let remainingAmount = data.amountPaid;
 
         // 4. Perform the updates inside a transaction
         await prisma.$transaction(async (tx) => {
             const operations = [];
 
-            for (const item of payableItems) {
+            for (const item of itemsToProcess) {
                 if (remainingAmount <= 0) break;
 
                 const amountToApply = Math.min(item.outstanding, remainingAmount);

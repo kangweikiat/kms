@@ -55,31 +55,28 @@ export default async function StudentPaymentDetailsPage(props: {
         disableLumpsum = false;
     }
 
-    // Also allow lumpsum when any subsequent monthly fee is still outstanding
-    // (enables excess from startup payment to carry forward, and allows lumpsum after startup is fully cleared)
-    if (enrollment.monthlyFeeInstances.some((m: any) => m.status !== 'PAID' && m.status !== 'WAIVED')) {
-        disableLumpsum = false;
-    }
-
-    // Compute ALL outstanding payable items for the lumpsum modal (mirrors backend priority)
+    // Compute startup-only payable items for the lumpsum modal
+    // First month school fee IS part of the startup package — subsequent months are auto-distributed by the backend
     const SIZE_KEYWORDS = ['uniform', 'pe attire']
     const lumpsumItems: { id: string; name: string; outstanding: number; priority: number; needsSize: boolean }[] = []
-    const firstMonthNum = enrollment.monthlyFeeInstances.length > 0 ? enrollment.monthlyFeeInstances[0].month : 1
+    const firstMonthNum = enrollment.monthlyFeeInstances.length > 0 ? enrollment.monthlyFeeInstances[0].month : null
 
-    enrollment.monthlyFeeInstances.forEach((m: any) => {
-        const paid = m.payments.reduce((s: number, p: any) => s + p.amountPaid, 0)
-        const outstanding = Math.max(0, m.amountDue - paid)
-        if (outstanding > 0) {
-            const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December']
-            lumpsumItems.push({
-                id: m.id,
-                name: `${monthNames[m.month - 1]} School Fee`,
-                outstanding,
-                priority: m.month === firstMonthNum ? 1 : 5 + m.month,
-                needsSize: false
-            })
-        }
-    })
+    // First month school fee only (subsequent months excluded — backend auto-distributes excess there)
+    enrollment.monthlyFeeInstances
+        .filter((m: any) => m.month === firstMonthNum)
+        .forEach((m: any) => {
+            const paid = m.payments.reduce((s: number, p: any) => s + p.amountPaid, 0)
+            const outstanding = Math.max(0, m.amountDue - paid)
+            if (outstanding > 0) {
+                lumpsumItems.push({
+                    id: m.id,
+                    name: `${MONTH_NAMES[(m.month ?? 1) - 1]} School Fee`,
+                    outstanding,
+                    priority: 1,
+                    needsSize: false
+                })
+            }
+        })
 
     enrollment.bookInstances.forEach((bi: any) => {
         const paid = bi.payments.reduce((s: number, p: any) => s + p.amountPaid, 0)
@@ -194,203 +191,204 @@ export default async function StudentPaymentDetailsPage(props: {
 
     return (
         <PageLoadingProvider>
-        <div className="max-w-4xl mx-auto space-y-8 pb-12">
-            <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <Link
-                        href="/admin/payments"
-                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">{student.name}</h1>
-                        <div className="text-sm text-gray-500">
-                            {enrollment.enrollmentLevel} • {enrollment.programType.replace(/_/g, ' ')} • {enrollment.academicYear}
-                        </div>
-                    </div>
-                </div>
-                <LogLumpsumPaymentModal
-                    enrollmentId={enrollment.id}
-                    disabled={disableLumpsum}
-                    lumpsumItems={lumpsumItems}
-                />
-            </div>
-
-            <div className="space-y-6">
-                {/* UNRECEIPTED PAYMENTS */}
-                {(enrollment as any).payments && (enrollment as any).payments.length > 0 && (
-                    <div className="bg-amber-50 rounded-xl shadow-sm border border-amber-200 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-amber-200 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-lg font-semibold text-amber-900">Unreceipted Payments</h2>
-                                <p className="text-sm text-amber-700 mt-0.5">These payments have been logged but no receipt has been issued yet.</p>
+            <div className="max-w-4xl mx-auto space-y-8 pb-12">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href="/admin/payments"
+                            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">{student.name}</h1>
+                            <div className="text-sm text-gray-500">
+                                {enrollment.enrollmentLevel} • {enrollment.programType.replace(/_/g, ' ')} • {enrollment.academicYear}
                             </div>
-                            <GenerateReceiptButton
-                                enrollmentId={enrollment.id}
-                                unreceiptedPayments={(enrollment as any).payments}
-                            />
-                        </div>
-                        <div className="divide-y divide-amber-100">
-                            {(enrollment as any).payments.map((p: any) => {
-                                let desc = p.note || 'Payment'
-                                if (p.monthlyFeeInstance) desc = `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][p.monthlyFeeInstance.month - 1]} School Fee`
-                                else if (p.miscFee) desc = p.miscFee.name
-                                else if (p.bookInstance) desc = `${p.bookInstance.feeItem.name} (${p.bookInstance.version})`
-                                return (
-                                    <div key={p.id} className="px-6 py-3 flex items-center justify-between">
-                                        <div>
-                                            <div className="text-sm font-medium text-amber-900">{desc}</div>
-                                            <div className="text-xs text-amber-600">{new Date(p.paidAt).toLocaleDateString()} · {p.method.replace('_',' ')}</div>
-                                        </div>
-                                        <span className="text-sm font-semibold text-amber-800">RM {p.amountPaid.toFixed(2)}</span>
-                                    </div>
-                                )
-                            })}
                         </div>
                     </div>
-                )}
+                    <LogLumpsumPaymentModal
+                        enrollmentId={enrollment.id}
+                        disabled={disableLumpsum}
+                        lumpsumItems={lumpsumItems}
+                        monthlyOutstanding={monthlyOutstanding}
+                    />
+                </div>
 
-                {/* RECEIPTS HISTORY */}
-                {enrollment.receipts && enrollment.receipts.length > 0 && (
+                <div className="space-y-6">
+                    {/* UNRECEIPTED PAYMENTS */}
+                    {(enrollment as any).payments && (enrollment as any).payments.length > 0 && (
+                        <div className="bg-amber-50 rounded-xl shadow-sm border border-amber-200 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-amber-200 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-amber-900">Unreceipted Payments</h2>
+                                    <p className="text-sm text-amber-700 mt-0.5">These payments have been logged but no receipt has been issued yet.</p>
+                                </div>
+                                <GenerateReceiptButton
+                                    enrollmentId={enrollment.id}
+                                    unreceiptedPayments={(enrollment as any).payments}
+                                />
+                            </div>
+                            <div className="divide-y divide-amber-100">
+                                {(enrollment as any).payments.map((p: any) => {
+                                    let desc = p.note || 'Payment'
+                                    if (p.monthlyFeeInstance) desc = `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][p.monthlyFeeInstance.month - 1]} School Fee`
+                                    else if (p.miscFee) desc = p.miscFee.name
+                                    else if (p.bookInstance) desc = `${p.bookInstance.feeItem.name} (${p.bookInstance.version})`
+                                    return (
+                                        <div key={p.id} className="px-6 py-3 flex items-center justify-between">
+                                            <div>
+                                                <div className="text-sm font-medium text-amber-900">{desc}</div>
+                                                <div className="text-xs text-amber-600">{new Date(p.paidAt).toLocaleDateString()} · {p.method.replace('_', ' ')}</div>
+                                            </div>
+                                            <span className="text-sm font-semibold text-amber-800">RM {p.amountPaid.toFixed(2)}</span>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* RECEIPTS HISTORY */}
+                    {enrollment.receipts && enrollment.receipts.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                                <h2 className="text-lg font-semibold text-gray-900">Receipts History</h2>
+                            </div>
+                            <div className="divide-y divide-gray-100">
+                                {enrollment.receipts.map((receipt: any) => {
+                                    let hasStartup = false;
+                                    let hasMonthly = false;
+                                    let hasMisc = false;
+
+                                    receipt.payments.forEach((p: any) => {
+                                        if (p.bookInstanceId || (p.miscFee && !p.miscFee.isAdhoc)) {
+                                            hasStartup = true;
+                                        }
+                                        if (p.monthlyFeeInstanceId) {
+                                            hasMonthly = true;
+                                        }
+                                        if (p.miscFee && p.miscFee.isAdhoc) {
+                                            hasMisc = true;
+                                        }
+                                    });
+
+                                    // Removed the displayBalance because the PDF takes care of it natively through historical snapshots now
+
+                                    return (
+                                        <div key={receipt.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div className="flex-1">
+                                                <div className="font-semibold text-gray-900">{receipt.receiptNo}</div>
+                                                <div className="text-sm text-gray-500 mt-1 flex flex-wrap gap-4 items-center">
+                                                    <span>Date: {new Date(receipt.paymentDate).toLocaleDateString()}</span>
+                                                    <span>Method: {receipt.paymentMethod}</span>
+                                                    <span className="font-medium text-gray-900">Total: {formatCurrency(receipt.amount)}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <DownloadReceiptButton
+                                                    receiptNo={receipt.receiptNo}
+                                                    receiptDetails={{
+                                                        ...receipt,
+                                                        studentName: student.name,
+                                                        enrollmentLevel: enrollment.enrollmentLevel,
+                                                        programType: enrollment.programType
+                                                    }}
+                                                    enrollment={enrollment}
+                                                />
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* STARTUP FEES */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-900">Receipts History</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">Startup Fees</h2>
                         </div>
                         <div className="divide-y divide-gray-100">
-                            {enrollment.receipts.map((receipt: any) => {
-                                let hasStartup = false;
-                                let hasMonthly = false;
-                                let hasMisc = false;
+                            {startupFees.length === 0 && <div className="p-6 text-gray-500 text-sm">No items found.</div>}
+                            {startupFees.map(renderMiscFee)}
+                        </div>
+                    </div>
 
-                                receipt.payments.forEach((p: any) => {
-                                    if (p.bookInstanceId || (p.miscFee && !p.miscFee.isAdhoc)) {
-                                        hasStartup = true;
-                                    }
-                                    if (p.monthlyFeeInstanceId) {
-                                        hasMonthly = true;
-                                    }
-                                    if (p.miscFee && p.miscFee.isAdhoc) {
-                                        hasMisc = true;
-                                    }
-                                });
+                    {/* MISCELLANEOUS FEES */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-900">Miscellaneous Fees</h2>
+                            <AddAdhocChargeModal enrollmentId={enrollment.id} />
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                            {miscFees.length === 0 && <div className="p-6 text-gray-500 text-sm">No items found.</div>}
+                            {miscFees.map(renderMiscFee)}
+                        </div>
+                    </div>
 
-                                // Removed the displayBalance because the PDF takes care of it natively through historical snapshots now
+                    {/* MONTHLY FEES */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-900">Monthly Fees</h2>
+                            <AdjustMonthlyFeesModal
+                                enrollmentId={enrollment.id}
+                                monthlyFeeInstances={enrollment.monthlyFeeInstances}
+                            />
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                            {enrollment.monthlyFeeInstances.length === 0 && <div className="p-6 text-gray-500 text-sm">No items found.</div>}
+                            {enrollment.monthlyFeeInstances.map((inst: any) => {
+                                const paid = inst.payments.reduce((s: number, p: any) => s + p.amountPaid, 0)
+                                const outstanding = Math.max(0, inst.amountDue - paid)
 
                                 return (
-                                    <div key={receipt.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div key={inst.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                         <div className="flex-1">
-                                            <div className="font-semibold text-gray-900">{receipt.receiptNo}</div>
-                                            <div className="text-sm text-gray-500 mt-1 flex flex-wrap gap-4 items-center">
-                                                <span>Date: {new Date(receipt.paymentDate).toLocaleDateString()}</span>
-                                                <span>Method: {receipt.paymentMethod}</span>
-                                                <span className="font-medium text-gray-900">Total: {formatCurrency(receipt.amount)}</span>
+                                            <div className="font-semibold text-gray-900">
+                                                {inst.feeItem.name} — {MONTH_NAMES[inst.month - 1]}
                                             </div>
+                                            <div className="text-sm text-gray-500 mt-1 flex flex-wrap gap-4 items-center">
+                                                <span>Due: {formatCurrency(inst.amountDue)}</span>
+                                                <span className="text-green-600">Paid: {formatCurrency(paid)}</span>
+                                                {outstanding > 0 && <span className="text-red-500 font-medium">Outstanding: {formatCurrency(outstanding)}</span>}
+                                            </div>
+                                            {inst.payments.length > 0 && (
+                                                <div className="mt-3 text-xs bg-gray-50 p-3 rounded-lg border border-gray-100 space-y-1.5">
+                                                    <div className="font-medium text-gray-700">Payment History:</div>
+                                                    {inst.payments.map((p: any) => (
+                                                        <div key={p.id} className="flex items-center justify-between text-gray-600 group">
+                                                            <span>{new Date(p.paidAt).toLocaleDateString()} via {p.method}</span>
+                                                            <div className="flex items-center">
+                                                                <span className="font-medium text-green-700">+{formatCurrency(p.amountPaid)}</span>
+                                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <CancelPaymentButton paymentId={p.id} />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="flex items-center gap-4">
-                                            <DownloadReceiptButton 
-                                                receiptNo={receipt.receiptNo} 
-                                                receiptDetails={{
-                                                    ...receipt,
-                                                    studentName: student.name,
-                                                    enrollmentLevel: enrollment.enrollmentLevel,
-                                                    programType: enrollment.programType
-                                                }} 
-                                                enrollment={enrollment}
-                                            />
+                                            {renderStatusBadge(inst.status)}
+                                            {inst.status !== 'PAID' && (
+                                                <LogPaymentModal
+                                                    enrollmentId={enrollment.id}
+                                                    monthlyFeeInstanceId={inst.id}
+                                                    itemName={MONTH_NAMES[inst.month - 1]}
+                                                    amountDue={outstanding}
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 )
                             })}
                         </div>
                     </div>
-                )}
 
-                {/* STARTUP FEES */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-gray-900">Startup Fees</h2>
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                        {startupFees.length === 0 && <div className="p-6 text-gray-500 text-sm">No items found.</div>}
-                        {startupFees.map(renderMiscFee)}
-                    </div>
                 </div>
-
-                {/* MISCELLANEOUS FEES */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-gray-900">Miscellaneous Fees</h2>
-                        <AddAdhocChargeModal enrollmentId={enrollment.id} />
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                        {miscFees.length === 0 && <div className="p-6 text-gray-500 text-sm">No items found.</div>}
-                        {miscFees.map(renderMiscFee)}
-                    </div>
-                </div>
-
-                {/* MONTHLY FEES */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-gray-900">Monthly Fees</h2>
-                        <AdjustMonthlyFeesModal
-                            enrollmentId={enrollment.id}
-                            monthlyFeeInstances={enrollment.monthlyFeeInstances}
-                        />
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                        {enrollment.monthlyFeeInstances.length === 0 && <div className="p-6 text-gray-500 text-sm">No items found.</div>}
-                        {enrollment.monthlyFeeInstances.map((inst: any) => {
-                            const paid = inst.payments.reduce((s: number, p: any) => s + p.amountPaid, 0)
-                            const outstanding = Math.max(0, inst.amountDue - paid)
-
-                            return (
-                                <div key={inst.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div className="flex-1">
-                                        <div className="font-semibold text-gray-900">
-                                            {inst.feeItem.name} — {MONTH_NAMES[inst.month - 1]}
-                                        </div>
-                                        <div className="text-sm text-gray-500 mt-1 flex flex-wrap gap-4 items-center">
-                                            <span>Due: {formatCurrency(inst.amountDue)}</span>
-                                            <span className="text-green-600">Paid: {formatCurrency(paid)}</span>
-                                            {outstanding > 0 && <span className="text-red-500 font-medium">Outstanding: {formatCurrency(outstanding)}</span>}
-                                        </div>
-                                        {inst.payments.length > 0 && (
-                                            <div className="mt-3 text-xs bg-gray-50 p-3 rounded-lg border border-gray-100 space-y-1.5">
-                                                <div className="font-medium text-gray-700">Payment History:</div>
-                                                {inst.payments.map((p: any) => (
-                                                    <div key={p.id} className="flex items-center justify-between text-gray-600 group">
-                                                        <span>{new Date(p.paidAt).toLocaleDateString()} via {p.method}</span>
-                                                        <div className="flex items-center">
-                                                            <span className="font-medium text-green-700">+{formatCurrency(p.amountPaid)}</span>
-                                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <CancelPaymentButton paymentId={p.id} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        {renderStatusBadge(inst.status)}
-                                        {inst.status !== 'PAID' && (
-                                            <LogPaymentModal
-                                                enrollmentId={enrollment.id}
-                                                monthlyFeeInstanceId={inst.id}
-                                                itemName={MONTH_NAMES[inst.month - 1]}
-                                                amountDue={outstanding}
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-
             </div>
-        </div>
         </PageLoadingProvider>
     )
 }

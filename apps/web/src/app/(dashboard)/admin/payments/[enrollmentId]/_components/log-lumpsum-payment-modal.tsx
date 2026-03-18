@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Plus, X, Ruler, CheckCircle2, Circle } from 'lucide-react'
+import { Plus, X, Ruler, CheckCircle2, Circle, CheckSquare, Square } from 'lucide-react'
 import { logLumpsumPayment } from '../../actions'
 import { usePageRefresh } from './page-loading-provider'
 import * as Dialog from '@radix-ui/react-dialog'
@@ -14,7 +14,7 @@ type LumpsumItem = {
     needsSize: boolean
 }
 
-// Simulate the backend distribution algorithm — pure frontend, no DB call
+// Simulates the backend distribution algorithm — purely frontend, no DB call
 function simulateCoverage(items: LumpsumItem[], amountPaid: number) {
     let remaining = amountPaid
     return items.map(item => {
@@ -28,31 +28,63 @@ function simulateCoverage(items: LumpsumItem[], amountPaid: number) {
 export function LogLumpsumPaymentModal({
     enrollmentId,
     disabled = false,
-    lumpsumItems = []
+    lumpsumItems = [],
+    monthlyOutstanding = 0
 }: {
     enrollmentId: string
     disabled?: boolean
     lumpsumItems?: LumpsumItem[]
+    monthlyOutstanding?: number
 }) {
     const [open, setOpen] = useState(false)
     const [amount, setAmount] = useState<number>(NaN)
     const [method, setMethod] = useState<'CASH' | 'ONLINE_TRANSFER' | 'TNG'>('CASH')
     const [note, setNote] = useState('')
     const [itemNotes, setItemNotes] = useState<Record<string, string>>({})
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [isSubmitting, setIsSubmitting] = useState(false)
     const { refreshPage, isRefreshing } = usePageRefresh()
     const isLoading = isSubmitting || isRefreshing
 
-    const totalOutstanding = lumpsumItems.reduce((s, i) => s + i.outstanding, 0)
+    const isManualMode = selectedIds.size > 0
 
-    // Dynamically compute which items are covered as amount changes
+    // Items actively participating in the distribution
+    const activeItems = useMemo(() => {
+        if (!isManualMode) return lumpsumItems
+        return lumpsumItems.filter(i => selectedIds.has(i.id))
+    }, [lumpsumItems, selectedIds, isManualMode])
+
+    const totalOutstanding = lumpsumItems.reduce((s, i) => s + i.outstanding, 0)
+    const activeOutstanding = activeItems.reduce((s, i) => s + i.outstanding, 0)
+
+    // Coverage preview — only over active items
     const coverage = useMemo(() => {
-        if (!amount || isNaN(amount) || amount <= 0) return lumpsumItems.map(i => ({ ...i, amountCovered: 0, fullyPaid: false }))
-        return simulateCoverage(lumpsumItems, amount)
-    }, [lumpsumItems, amount])
+        const validAmount = !isNaN(amount) && amount > 0 ? amount : 0
+        return simulateCoverage(activeItems, validAmount)
+    }, [activeItems, amount])
+
+    // Map coverage back by id for quick lookup
+    const coverageById = useMemo(() => {
+        const map: Record<string, { amountCovered: number; fullyPaid: boolean }> = {}
+        coverage.forEach(c => { map[c.id] = { amountCovered: c.amountCovered, fullyPaid: c.fullyPaid } })
+        return map
+    }, [coverage])
+
+    function toggleItem(id: string) {
+        setSelectedIds(prev => {
+            const next = new Set(prev)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            return next
+        })
+    }
 
     function handleOpen(val: boolean) {
-        if (!val) setItemNotes({})
+        if (!val) {
+            setItemNotes({})
+            setSelectedIds(new Set())
+            setAmount(NaN)
+        }
         setOpen(val)
     }
 
@@ -66,7 +98,8 @@ export function LogLumpsumPaymentModal({
             amountPaid: amount,
             method,
             note: note || undefined,
-            itemNotes: Object.keys(itemNotes).length > 0 ? itemNotes : undefined
+            itemNotes: Object.keys(itemNotes).length > 0 ? itemNotes : undefined,
+            selectedItemIds: isManualMode ? Array.from(selectedIds) : undefined
         })
 
         if (res.success) {
@@ -74,6 +107,7 @@ export function LogLumpsumPaymentModal({
             setAmount(NaN)
             setNote('')
             setItemNotes({})
+            setSelectedIds(new Set())
             refreshPage()
         } else {
             alert(res.error)
@@ -108,7 +142,7 @@ export function LogLumpsumPaymentModal({
                     <form onSubmit={handleSubmit} className="overflow-y-auto flex-1">
                         <div className="p-6 space-y-5">
 
-                            {/* ── AMOUNT FIELD (top) ── */}
+                            {/* ── AMOUNT FIELD ── */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Amount to Pay
@@ -127,81 +161,119 @@ export function LogLumpsumPaymentModal({
                                         placeholder="0.00"
                                     />
                                 </div>
-                                {lumpsumItems.length > 0 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setAmount(totalOutstanding)}
-                                        className="mt-1.5 text-xs text-blue-600 hover:underline"
-                                    >
-                                        Fill full outstanding amount (RM {totalOutstanding.toFixed(2)})
-                                    </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setAmount(activeOutstanding)}
+                                    className="mt-1.5 text-xs text-blue-600 hover:underline"
+                                >
+                                    {isManualMode
+                                        ? `Fill selected items total (RM ${activeOutstanding.toFixed(2)})`
+                                        : `Fill full outstanding amount (RM ${totalOutstanding.toFixed(2)})`
+                                    }
+                                </button>
+
+                                {/* Excess → monthly fees banner */}
+                                {!isNaN(amount) && amount > activeOutstanding && activeOutstanding > 0 && monthlyOutstanding > 0 && (
+                                    <div className="mt-2 flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-800">
+                                        <span className="text-blue-500 text-base leading-none">ℹ️</span>
+                                        <span>
+                                            Excess <strong>RM {(Math.min(amount - activeOutstanding, monthlyOutstanding)).toFixed(2)}</strong> will auto-distribute to outstanding monthly school fees
+                                            {' '}(RM {monthlyOutstanding.toFixed(2)} remaining).
+                                        </span>
+                                    </div>
                                 )}
-                                {!isNaN(amount) && amount > totalOutstanding && totalOutstanding > 0 && (
+
+                                {/* True overpayment — nothing left to absorb the excess */}
+                                {!isNaN(amount) && amount > activeOutstanding && activeOutstanding > 0 && monthlyOutstanding === 0 && (
                                     <div className="mt-2 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
                                         <span className="text-amber-500 text-base leading-none">⚠️</span>
                                         <span>
-                                            Amount entered exceeds total outstanding by{' '}
-                                            <strong>RM {(amount - totalOutstanding).toFixed(2)}</strong>.
-                                            Only <strong>RM {totalOutstanding.toFixed(2)}</strong> will be applied.
+                                            Exceeds {isManualMode ? 'selected' : 'total'} outstanding by{' '}
+                                            <strong>RM {(amount - activeOutstanding).toFixed(2)}</strong>.
+                                            Only <strong>RM {activeOutstanding.toFixed(2)}</strong> will be applied.
                                             The excess will <strong>not</strong> be recorded.
                                         </span>
                                     </div>
                                 )}
                             </div>
 
-                            {/* ── DYNAMIC ITEM BREAKDOWN ── */}
+                            {/* ── ITEM LIST ── */}
                             {lumpsumItems.length > 0 && (
                                 <div>
-                                    <div className="text-sm font-medium text-gray-600 mb-2">Payment distribution (in priority order)</div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium text-gray-600">
+                                            {isManualMode
+                                                ? `Paying ${selectedIds.size} selected item${selectedIds.size > 1 ? 's' : ''} (manual)`
+                                                : 'Auto-distribute (tap items to select specific ones)'}
+                                        </span>
+                                        {isManualMode && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedIds(new Set())}
+                                                className="text-xs text-blue-500 hover:underline"
+                                            >
+                                                Clear selection
+                                            </button>
+                                        )}
+                                    </div>
+
                                     <div className="border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
-                                        {coverage.map((item) => {
-                                            const isCovered = item.amountCovered > 0
-                                            const isPartial = isCovered && !item.fullyPaid
+                                        {lumpsumItems.map((item) => {
+                                            const isSelected = selectedIds.has(item.id)
+                                            const cov = coverageById[item.id]
+                                            const isCovered = cov && cov.amountCovered > 0
+                                            const isPartial = isCovered && !cov.fullyPaid
+                                            const isActive = !isManualMode || isSelected
+
                                             return (
                                                 <div
                                                     key={item.id}
-                                                    className={`px-4 py-3 transition-colors duration-200 ${
-                                                        item.fullyPaid
-                                                            ? 'bg-green-50'
-                                                            : isPartial
-                                                            ? 'bg-amber-50'
-                                                            : 'bg-white'
+                                                    className={`px-4 py-3 transition-colors duration-150 cursor-pointer select-none ${
+                                                        isSelected
+                                                            ? cov?.fullyPaid ? 'bg-green-50' : isPartial ? 'bg-amber-50' : 'bg-blue-50'
+                                                            : isActive && cov?.fullyPaid ? 'bg-green-50'
+                                                            : isActive && isPartial ? 'bg-amber-50'
+                                                            : 'bg-white hover:bg-gray-50'
                                                     }`}
+                                                    onClick={() => toggleItem(item.id)}
                                                 >
-                                                    <div className="flex items-center justify-between gap-3">
-                                                        <div className="flex items-center gap-2">
-                                                            {item.fullyPaid ? (
-                                                                <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                                                            ) : isPartial ? (
-                                                                <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                                                            ) : (
-                                                                <Circle className="w-4 h-4 text-gray-300 shrink-0" />
-                                                            )}
-                                                            <span className={`text-sm font-medium ${
-                                                                item.fullyPaid ? 'text-green-800' : isPartial ? 'text-amber-800' : 'text-gray-400'
-                                                            }`}>
-                                                                {item.name}
-                                                            </span>
+                                                    <div className="flex items-center gap-3">
+                                                        {/* Checkbox */}
+                                                        <div className="shrink-0 text-gray-400">
+                                                            {isSelected
+                                                                ? <CheckSquare className="w-4 h-4 text-blue-500" />
+                                                                : <Square className="w-4 h-4 text-gray-300" />
+                                                            }
                                                         </div>
-                                                        <div className="text-right shrink-0">
-                                                            {isCovered ? (
-                                                                <span className={`text-sm font-semibold ${item.fullyPaid ? 'text-green-700' : 'text-amber-700'}`}>
-                                                                    RM {item.amountCovered.toFixed(2)}
-                                                                    {isPartial && (
-                                                                        <span className="text-xs font-normal ml-1 text-amber-500">
-                                                                            / {item.outstanding.toFixed(2)}
-                                                                        </span>
-                                                                    )}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-sm text-gray-300">RM {item.outstanding.toFixed(2)}</span>
-                                                            )}
-                                                        </div>
+
+                                                        {/* Coverage icon */}
+                                                        {isActive && (
+                                                            cov?.fullyPaid
+                                                                ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                                                                : isPartial
+                                                                ? <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                                                                : <Circle className="w-4 h-4 text-gray-300 shrink-0" />
+                                                        )}
+
+                                                        <span className={`text-sm font-medium flex-1 ${
+                                                            !isActive ? 'text-gray-300' : cov?.fullyPaid ? 'text-green-800' : isPartial ? 'text-amber-800' : 'text-gray-700'
+                                                        }`}>
+                                                            {item.name}
+                                                        </span>
+
+                                                        <span className={`text-sm shrink-0 ${
+                                                            !isActive ? 'text-gray-300' : isCovered ? (cov.fullyPaid ? 'text-green-700 font-semibold' : 'text-amber-700 font-semibold') : 'text-gray-400'
+                                                        }`}>
+                                                            {isActive && isCovered
+                                                                ? <>RM {cov.amountCovered.toFixed(2)}{isPartial && <span className="text-xs font-normal ml-1 opacity-70">/ {item.outstanding.toFixed(2)}</span>}</>
+                                                                : `RM ${item.outstanding.toFixed(2)}`
+                                                            }
+                                                        </span>
                                                     </div>
 
-                                                    {/* Size input — only shown when this item is being covered */}
-                                                    {item.needsSize && isCovered && (
-                                                        <div className="mt-2 ml-6">
+                                                    {/* Size input — only for covered+selected items with needsSize */}
+                                                    {item.needsSize && isActive && isCovered && (
+                                                        <div className="mt-2 ml-14" onClick={e => e.stopPropagation()}>
                                                             <div className="flex items-center gap-1 text-xs text-blue-600 mb-1">
                                                                 <Ruler className="w-3 h-3" />
                                                                 Size (will appear on receipt)
@@ -219,7 +291,6 @@ export function LogLumpsumPaymentModal({
                                             )
                                         })}
 
-                                        {/* Total row */}
                                         <div className="px-4 py-2.5 bg-gray-50 flex justify-between items-center">
                                             <span className="text-sm font-semibold text-gray-700">Total Outstanding</span>
                                             <span className="text-sm font-semibold text-gray-700">RM {totalOutstanding.toFixed(2)}</span>
@@ -264,7 +335,7 @@ export function LogLumpsumPaymentModal({
                             <button
                                 type="submit"
                                 disabled={isLoading || !amount || isNaN(amount) || amount <= 0}
-                                className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition flex items-center gap-2"
+                                className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition"
                             >
                                 {isLoading ? 'Processing...' : 'Record Payment'}
                             </button>
