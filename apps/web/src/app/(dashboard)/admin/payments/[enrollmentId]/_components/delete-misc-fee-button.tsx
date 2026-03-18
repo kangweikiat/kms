@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { deleteMiscFee } from '../../actions'
 import { ConfirmationModal } from '@/components/ui/confirmation-modal'
+import { usePageRefresh } from './page-loading-provider'
 
 export function DeleteMiscFeeButton({ miscFeeId, itemName }: { miscFeeId: string, itemName: string }) {
     const [isLoading, setIsLoading] = useState(false)
     const [modalOpen, setModalOpen] = useState(false)
+    const { refreshPage } = usePageRefresh()
 
     const handleDelete = async () => {
         setIsLoading(true)
@@ -18,6 +20,7 @@ export function DeleteMiscFeeButton({ miscFeeId, itemName }: { miscFeeId: string
             alert(res.error || "Failed to delete fee.")
         } else {
             setModalOpen(false)
+            refreshPage()
         }
     }
 

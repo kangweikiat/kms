@@ -10,6 +10,8 @@ import { AdjustMonthlyFeesModal } from './_components/adjust-monthly-fees-modal'
 import { CancelPaymentButton } from './_components/cancel-payment-button'
 import { DeleteMiscFeeButton } from './_components/delete-misc-fee-button'
 import { DownloadReceiptButton } from './_components/download-receipt-button'
+import { GenerateReceiptButton } from './_components/generate-receipt-button'
+import { PageLoadingProvider } from './_components/page-loading-provider'
 
 export default async function StudentPaymentDetailsPage(props: {
     params: Promise<{ enrollmentId: string }>
@@ -52,6 +54,68 @@ export default async function StudentPaymentDetailsPage(props: {
     if (startupFees.some((m: any) => m.status !== 'PAID' && m.status !== 'WAIVED')) {
         disableLumpsum = false;
     }
+
+    // Also allow lumpsum when any subsequent monthly fee is still outstanding
+    // (enables excess from startup payment to carry forward, and allows lumpsum after startup is fully cleared)
+    if (enrollment.monthlyFeeInstances.some((m: any) => m.status !== 'PAID' && m.status !== 'WAIVED')) {
+        disableLumpsum = false;
+    }
+
+    // Compute ALL outstanding payable items for the lumpsum modal (mirrors backend priority)
+    const SIZE_KEYWORDS = ['uniform', 'pe attire']
+    const lumpsumItems: { id: string; name: string; outstanding: number; priority: number; needsSize: boolean }[] = []
+    const firstMonthNum = enrollment.monthlyFeeInstances.length > 0 ? enrollment.monthlyFeeInstances[0].month : 1
+
+    enrollment.monthlyFeeInstances.forEach((m: any) => {
+        const paid = m.payments.reduce((s: number, p: any) => s + p.amountPaid, 0)
+        const outstanding = Math.max(0, m.amountDue - paid)
+        if (outstanding > 0) {
+            const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December']
+            lumpsumItems.push({
+                id: m.id,
+                name: `${monthNames[m.month - 1]} School Fee`,
+                outstanding,
+                priority: m.month === firstMonthNum ? 1 : 5 + m.month,
+                needsSize: false
+            })
+        }
+    })
+
+    enrollment.bookInstances.forEach((bi: any) => {
+        const paid = bi.payments.reduce((s: number, p: any) => s + p.amountPaid, 0)
+        const outstanding = Math.max(0, bi.amountDue - paid)
+        if (outstanding > 0) {
+            lumpsumItems.push({
+                id: bi.id,
+                name: `${bi.feeItem?.name || 'Book'} (${bi.version})`,
+                outstanding,
+                priority: 4,
+                needsSize: false
+            })
+        }
+    })
+
+    enrollment.miscFees
+        .filter((m: any) => !m.isAdhoc)
+        .forEach((m: any) => {
+            const paid = m.payments.reduce((s: number, p: any) => s + p.amountPaid, 0)
+            const outstanding = Math.max(0, m.amountDue - paid)
+            if (outstanding > 0) {
+                const lowerName = m.name.toLowerCase()
+                let priority = 4
+                if (lowerName.includes('deposit')) priority = 2
+                else if (lowerName.includes('registration')) priority = 3
+                lumpsumItems.push({
+                    id: m.id,
+                    name: m.name,
+                    outstanding,
+                    priority,
+                    needsSize: SIZE_KEYWORDS.some(k => lowerName.includes(k))
+                })
+            }
+        })
+
+    lumpsumItems.sort((a, b) => a.priority - b.priority)
 
     // Calculate contextual outstanding balances
     let startupOutstanding = 0;
@@ -129,6 +193,7 @@ export default async function StudentPaymentDetailsPage(props: {
     }
 
     return (
+        <PageLoadingProvider>
         <div className="max-w-4xl mx-auto space-y-8 pb-12">
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -148,10 +213,44 @@ export default async function StudentPaymentDetailsPage(props: {
                 <LogLumpsumPaymentModal
                     enrollmentId={enrollment.id}
                     disabled={disableLumpsum}
+                    lumpsumItems={lumpsumItems}
                 />
             </div>
 
             <div className="space-y-6">
+                {/* UNRECEIPTED PAYMENTS */}
+                {(enrollment as any).payments && (enrollment as any).payments.length > 0 && (
+                    <div className="bg-amber-50 rounded-xl shadow-sm border border-amber-200 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-amber-200 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-lg font-semibold text-amber-900">Unreceipted Payments</h2>
+                                <p className="text-sm text-amber-700 mt-0.5">These payments have been logged but no receipt has been issued yet.</p>
+                            </div>
+                            <GenerateReceiptButton
+                                enrollmentId={enrollment.id}
+                                unreceiptedPayments={(enrollment as any).payments}
+                            />
+                        </div>
+                        <div className="divide-y divide-amber-100">
+                            {(enrollment as any).payments.map((p: any) => {
+                                let desc = p.note || 'Payment'
+                                if (p.monthlyFeeInstance) desc = `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][p.monthlyFeeInstance.month - 1]} School Fee`
+                                else if (p.miscFee) desc = p.miscFee.name
+                                else if (p.bookInstance) desc = `${p.bookInstance.feeItem.name} (${p.bookInstance.version})`
+                                return (
+                                    <div key={p.id} className="px-6 py-3 flex items-center justify-between">
+                                        <div>
+                                            <div className="text-sm font-medium text-amber-900">{desc}</div>
+                                            <div className="text-xs text-amber-600">{new Date(p.paidAt).toLocaleDateString()} · {p.method.replace('_',' ')}</div>
+                                        </div>
+                                        <span className="text-sm font-semibold text-amber-800">RM {p.amountPaid.toFixed(2)}</span>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {/* RECEIPTS HISTORY */}
                 {enrollment.receipts && enrollment.receipts.length > 0 && (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -292,5 +391,6 @@ export default async function StudentPaymentDetailsPage(props: {
 
             </div>
         </div>
+        </PageLoadingProvider>
     )
 }

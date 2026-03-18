@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Plus, X } from 'lucide-react'
 import { logPayment } from '../../actions'
+import { usePageRefresh } from './page-loading-provider'
 
 export function LogPaymentModal({
     enrollmentId,
@@ -26,7 +27,8 @@ export function LogPaymentModal({
     const [method, setMethod] = useState<'CASH' | 'ONLINE_TRANSFER' | 'TNG'>('CASH')
     const [note, setNote] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const router = useRouter()
+    const { refreshPage, isRefreshing } = usePageRefresh()
+    const isLoading = isSubmitting || isRefreshing
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -45,7 +47,7 @@ export function LogPaymentModal({
 
         if (res.success) {
             setOpen(false)
-            router.refresh()
+            refreshPage()
         } else {
             alert(res.error)
         }
@@ -108,14 +110,19 @@ export function LogPaymentModal({
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Reference / Note (Optional)</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    {/uniform|pe attire/i.test(itemName) ? 'Size (will appear on receipt)' : 'Reference / Note (Optional)'}
+                                </label>
                                 <input
                                     type="text"
                                     value={note}
                                     onChange={e => setNote(e.target.value)}
-                                    placeholder="e.g. Receipt #12345"
+                                    placeholder={/uniform|pe attire/i.test(itemName) ? 'e.g. Size: M' : 'e.g. Reference #12345'}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                                 />
+                                {/uniform|pe attire/i.test(itemName) && (
+                                    <p className="text-xs text-blue-600 mt-1">💡 Size will be printed on the receipt description.</p>
+                                )}
                             </div>
                         </div>
 
@@ -130,10 +137,10 @@ export function LogPaymentModal({
                             </Dialog.Close>
                             <button
                                 type="submit"
-                                disabled={isSubmitting || amount > amountDue || amount <= 0}
+                                disabled={isLoading || amount > amountDue || amount <= 0}
                                 className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition flex items-center gap-2"
                             >
-                                {isSubmitting ? 'Recording...' : 'Record Payment'}
+                                {isLoading ? 'Recording...' : 'Record Payment'}
                             </button>
                         </div>
                     </form>

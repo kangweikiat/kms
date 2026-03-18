@@ -133,13 +133,16 @@ export function DownloadReceiptButton({ receiptNo, receiptDetails, enrollment }:
                         cat = 'STARTUP'
                     }
                     detail = p.miscFee.name
+                    if (p.note) detail = `${p.miscFee.name} (${p.note})`
                     const totalPaidForInstance = p.miscFee.payments
                         .filter(isHistoricalOrCurrentPayment)
                         .reduce((sum: number, pp: any) => sum + pp.amountPaid, 0)
                     balance = Math.max(0, p.miscFee.amountDue - totalPaidForInstance)
                 }
 
-                (categories as any)[cat].description.push(detail);
+                if (detail && !(categories as any)[cat].description.includes(detail)) {
+                    (categories as any)[cat].description.push(detail);
+                }
                 (categories as any)[cat].amount += p.amountPaid;
 
                 // If there are multiple items in the same category, their balances sum up here.

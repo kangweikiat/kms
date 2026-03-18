@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { Undo2 } from 'lucide-react'
 import { cancelPayment } from '../../actions'
 import { ConfirmationModal } from '@/components/ui/confirmation-modal'
+import { usePageRefresh } from './page-loading-provider'
 
 export function CancelPaymentButton({ paymentId }: { paymentId: string }) {
     const [isLoading, setIsLoading] = useState(false)
     const [modalOpen, setModalOpen] = useState(false)
+    const { refreshPage } = usePageRefresh()
 
     const handleCancel = async () => {
         setIsLoading(true)
@@ -18,6 +20,7 @@ export function CancelPaymentButton({ paymentId }: { paymentId: string }) {
             alert(res.error || "Failed to cancel payment.")
         } else {
             setModalOpen(false)
+            refreshPage()
         }
     }
 
