@@ -348,6 +348,16 @@ export default async function StudentPaymentDetailsPage(props: {
                                             <div className="font-semibold text-gray-900">
                                                 {inst.feeItem.name} — {MONTH_NAMES[inst.month - 1]}
                                             </div>
+                                            {inst.adjustmentType && (
+                                                <div className="mt-0.5 text-xs text-blue-700 font-medium">
+                                                    {inst.adjustmentType === 'WAIVE' && '🚫 Waived'}
+                                                    {inst.adjustmentType === 'PERCENT' && `📉 ${inst.adjustmentPercent}% of original`}
+                                                    {inst.adjustmentType === 'FIXED_AMOUNT' && `📌 Fixed at RM ${Number(inst.adjustmentFixedAmount).toFixed(2)}`}
+                                                    {inst.adjustmentReason && (
+                                                        <span className="text-gray-400 font-normal"> • {inst.adjustmentReason}</span>
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="text-sm text-gray-500 mt-1 flex flex-wrap gap-4 items-center">
                                                 <span>Due: {formatCurrency(inst.amountDue)}</span>
                                                 <span className="text-green-600">Paid: {formatCurrency(paid)}</span>

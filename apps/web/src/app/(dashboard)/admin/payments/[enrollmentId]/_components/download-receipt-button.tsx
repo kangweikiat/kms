@@ -108,6 +108,19 @@ export function DownloadReceiptButton({ receiptNo, receiptDetails, enrollment }:
                     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
                     detail = `${months[p.monthlyFeeInstance.month - 1]} School Fee`
 
+                    // Append adjustment info if applicable (Waive / Percent / Fixed Amount)
+                    const adj = p.monthlyFeeInstance.adjustmentType
+                    const adjReason = p.monthlyFeeInstance.adjustmentReason || ''
+                    if (adj === 'WAIVE') {
+                        detail += adjReason ? ` (Waived: ${adjReason})` : ' (Waived)'
+                    } else if (adj === 'PERCENT') {
+                        const pct = p.monthlyFeeInstance.adjustmentPercent
+                        detail += adjReason ? ` (${pct}%: ${adjReason})` : ` (${pct}%)`
+                    } else if (adj === 'FIXED_AMOUNT') {
+                        const amt = p.monthlyFeeInstance.adjustmentFixedAmount
+                        detail += adjReason ? ` (Fixed RM ${Number(amt).toFixed(2)}: ${adjReason})` : ` (Fixed RM ${Number(amt).toFixed(2)})`
+                    }
+
                     const totalPaidForInstance = p.monthlyFeeInstance.payments
                         .filter(isHistoricalOrCurrentPayment)
                         .reduce((sum: number, pp: any) => sum + pp.amountPaid, 0)
