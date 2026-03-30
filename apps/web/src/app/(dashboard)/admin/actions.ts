@@ -1,28 +1,11 @@
 'use server'
 
 import { prisma, Role } from '@kms/database'
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireRole } from '@/lib/auth-utils'
 import { mockStudents, mockClasses } from './mock-data'
 
 export async function getDashboardStats(year: number = 2026) {
-    const supabase = await createClient()
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-        redirect('/login')
-    }
-
-    // 1. Verify Role
-    const dbUser = await prisma.user.findUnique({
-        where: { email: user.email },
-    })
-
-    if (!dbUser || dbUser.role !== Role.ADMIN) {
-        redirect('/login')
-    }
+    const user = await requireRole([Role.ADMIN])
 
     // 2. Fetch Data (MOCK) & Filter by Year
     const filteredStudents = mockStudents.filter(s => (s.intakeYear || 2026) === year)

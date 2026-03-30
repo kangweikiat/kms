@@ -1,9 +1,9 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { auth } from "@/auth"
 
-export async function middleware(request: NextRequest) {
-    return await updateSession(request)
-}
+export default auth((req) => {
+    // Basic protection: if trying to access /admin naturally NextAuth doesn't auto redirect unless configured, 
+    // but we can enforce it here or let Layout handle it. We will leave it simple.
+})
 
 export const config = {
     matcher: [
@@ -12,8 +12,8 @@ export const config = {
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
-         * Feel free to modify this pattern to include more paths.
+         * - images (public images)
          */
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/((?!_next/static|_next/image|favicon.ico|images|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 }
