@@ -141,7 +141,7 @@ export async function logPayment(data: {
 }) {
     try {
         await prisma.$transaction(async (tx) => {
-            // 1. Create the payment
+            // 1. Create the payment (no receipt - admin can generate receipt separately)
             const payment = await tx.payment.create({
                 data: {
                     enrollmentId: data.enrollmentId,
@@ -151,7 +151,8 @@ export async function logPayment(data: {
                     paidAt: new Date(),
                     monthlyFeeInstanceId: data.monthlyFeeInstanceId,
                     bookInstanceId: data.bookInstanceId,
-                    miscFeeId: data.miscFeeId
+                    miscFeeId: data.miscFeeId,
+                    receiptId: null
                 }
             });
 
@@ -383,6 +384,27 @@ export async function getEnrollmentPaymentDetails(enrollmentId: string) {
                     include: {
                         payments: { orderBy: { createdAt: 'desc' } }
                     }
+                },
+                receipts: {
+                    orderBy: { createdAt: 'desc' },
+                    include: {
+                        payments: {
+                            include: {
+                                monthlyFeeInstance: { include: { feeItem: true, payments: true } },
+                                miscFee: { include: { payments: true } },
+                                bookInstance: { include: { feeItem: true, payments: true } }
+                            }
+                        }
+                    }
+                },
+                payments: {
+                    where: { receiptId: null },
+                    orderBy: { paidAt: 'desc' },
+                    include: {
+                        monthlyFeeInstance: { include: { feeItem: true } },
+                        miscFee: true,
+                        bookInstance: { include: { feeItem: true } }
+                    }
                 }
             }
         });
@@ -401,6 +423,8 @@ export async function logLumpsumPayment(data: {
     amountPaid: number;
     method: PaymentMethodEnum;
     note?: string;
+    itemNotes?: Record<string, string>; // itemId -> note (e.g. size)
+    selectedItemIds?: string[];          // if provided, only pay these items
 }) {
     try {
         if (data.amountPaid <= 0) {
@@ -482,29 +506,40 @@ export async function logLumpsumPayment(data: {
         // Sort by priority (1 to 4)
         payableItems.sort((a, b) => a.priority - b.priority);
 
+        // If specific items are selected, filter to only those (preserving priority order)
+        const itemsToProcess = data.selectedItemIds && data.selectedItemIds.length > 0
+            ? payableItems.filter(item => data.selectedItemIds!.includes(item.id))
+            : payableItems;
+
         let remainingAmount = data.amountPaid;
 
         // 4. Perform the updates inside a transaction
         await prisma.$transaction(async (tx) => {
             const operations = [];
 
-            for (const item of payableItems) {
+            for (const item of itemsToProcess) {
                 if (remainingAmount <= 0) break;
 
                 const amountToApply = Math.min(item.outstanding, remainingAmount);
                 remainingAmount -= amountToApply;
 
-                // Create payment
+                // Create payment (no receipt - admin can generate receipt separately)
+                // Use per-item note if provided (e.g. size for Uniform), otherwise use general note
+                const itemNote = (item.type === 'MISC' && data.itemNotes?.[item.id])
+                    ? data.itemNotes[item.id]
+                    : data.note ? `Lumpsum: ${data.note}` : `Lumpsum Payment Distribution`;
+
                 operations.push(
                     tx.payment.create({
                         data: {
                             enrollmentId: data.enrollmentId,
                             amountPaid: amountToApply,
                             method: data.method,
-                            note: data.note ? `Lumpsum: ${data.note}` : `Lumpsum Payment Distribution`,
+                            note: itemNote,
                             paidAt: new Date(),
                             monthlyFeeInstanceId: item.type === 'MONTHLY' ? item.id : null,
                             miscFeeId: item.type === 'MISC' ? item.id : null,
+                            receiptId: null
                         }
                     })
                 );
@@ -825,6 +860,77 @@ export async function deleteMiscFee(miscFeeId: string) {
         return { success: true };
     } catch (error: any) {
         console.error('deleteMiscFee error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function generateReceipt(data: {
+    enrollmentId: string;
+    paymentIds: string[];
+    method: PaymentMethodEnum;
+}) {
+    try {
+        if (!data.paymentIds.length) {
+            return { success: false, error: 'No payments selected.' };
+        }
+
+        // Verify all payments belong to this enrollment and are unreceipted
+        const payments = await prisma.payment.findMany({
+            where: {
+                id: { in: data.paymentIds },
+                enrollmentId: data.enrollmentId,
+                receiptId: null
+            }
+        });
+
+        if (payments.length !== data.paymentIds.length) {
+            return { success: false, error: 'Some payments are invalid or already have a receipt.' };
+        }
+
+        const totalAmount = payments.reduce((sum, p) => sum + p.amountPaid, 0);
+
+        await prisma.$transaction(async (tx) => {
+            const year = new Date().getFullYear();
+            let prefix = 'CSH';
+            let sequenceKey = `RECEIPT_CASH_${year}`;
+
+            if (data.method === PaymentMethodEnum.ONLINE_TRANSFER || (data.method as any) === 'BANK_TRANSFER') {
+                prefix = 'ONL';
+                sequenceKey = `RECEIPT_ONLINE_${year}`;
+            } else if (data.method === PaymentMethodEnum.TNG || (data.method as any) === 'ONLINE') {
+                prefix = 'TNG';
+                sequenceKey = `RECEIPT_TNG_${year}`;
+            }
+
+            const sequence = await tx.appSequence.upsert({
+                where: { key: sequenceKey },
+                create: { key: sequenceKey, value: 1 },
+                update: { value: { increment: 1 } }
+            });
+            const receiptNo = `${prefix}${year}${sequence.value.toString().padStart(4, '0')}`;
+
+            const receipt = await tx.receipt.create({
+                data: {
+                    receiptNo,
+                    enrollmentId: data.enrollmentId,
+                    amount: totalAmount,
+                    paymentDate: new Date(),
+                    paymentMethod: data.method
+                }
+            });
+
+            // Link all selected payments to the new receipt
+            await tx.payment.updateMany({
+                where: { id: { in: data.paymentIds } },
+                data: { receiptId: receipt.id }
+            });
+        });
+
+        revalidatePath('/admin/payments');
+        revalidatePath(`/admin/payments/${data.enrollmentId}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error('generateReceipt error:', error);
         return { success: false, error: error.message };
     }
 }

@@ -44,13 +44,13 @@ model ParentProfile {
 }
 
 model Student {
-  id        String   @id @default(uuid())
-  name      String
-  dob       DateTime
-  gender    String
-  icNo      String   @unique
-  race      String
-  address   String?
+  id      String   @id @default(uuid())
+  name    String
+  dob     DateTime
+  gender  String
+  icNo    String   @unique
+  race    String
+  address String?
 
   // No enrollment details here anymore
 
@@ -72,7 +72,7 @@ model Student {
   emergencyAddress String?
 
   enrollments Enrollment[]
-  
+
   // existing relations
   parentId String?
   parent   ParentProfile? @relation(fields: [parentId], references: [id])
@@ -80,40 +80,41 @@ model Student {
   attendances Attendance[]
   fees        Fee[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 }
 
 model Enrollment {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id])
 
   academicYear    Int
   enrollmentLevel EnrollmentLevel
   programType     ProgramType
-  transport       Boolean @default(false)
+  transport       Boolean          @default(false)
   remarks         String?
   status          EnrollmentStatus @default(ACTIVE)
-  isNewStudent    Boolean @default(true)
+  isNewStudent    Boolean          @default(true)
 
   classId String?
   class   Class?  @relation(fields: [classId], references: [id])
 
   startDate     DateTime       @default(now())
-  languageClass LanguageClass? 
+  languageClass LanguageClass?
 
   feePackageId         String?
-  feePackage           FeePackage? @relation(fields: [feePackageId], references: [id])
+  feePackage           FeePackage?               @relation(fields: [feePackageId], references: [id])
   feePackageAssignedAt DateTime?
   feeAdjustments       EnrollmentFeeAdjustment[]
 
-  payments             Payment[]
-  monthlyFeeInstances  MonthlyFeeInstance[]
-  bookInstances        BookInstance[]
-  miscFees             MiscFee[]
-  programChanges       EnrollmentProgramChange[]
+  payments            Payment[]
+  receipts            Receipt[]
+  monthlyFeeInstances MonthlyFeeInstance[]
+  bookInstances       BookInstance[]
+  miscFees            MiscFee[]
+  programChanges      EnrollmentProgramChange[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -157,23 +158,23 @@ enum FeeProgramType {
 }
 
 model Building {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String  @id @default(uuid())
+  name        String  @unique
   description String?
-  isActive    Boolean  @default(true)
+  isActive    Boolean @default(true)
   classes     Class[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Class {
-  id          String   @id @default(uuid())
+  id          String          @id @default(uuid())
   name        String
   description String?
   capacity    Int
   level       EnrollmentLevel @default(M2)
-  isActive    Boolean  @default(true)
+  isActive    Boolean         @default(true)
 
   academicYearId String
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
@@ -181,8 +182,8 @@ model Class {
   buildingId String
   building   Building @relation(fields: [buildingId], references: [id])
 
-  teacherId   String?
-  teacher     TeacherProfile? @relation(fields: [teacherId], references: [id])
+  teacherId String?
+  teacher   TeacherProfile? @relation(fields: [teacherId], references: [id])
 
   enrollments Enrollment[]
 
@@ -195,7 +196,7 @@ model Class {
 model Attendance {
   id        String   @id @default(uuid())
   date      DateTime
-  status    String   // PRESENT, ABSENT, LATE, EXCUSED
+  status    String // PRESENT, ABSENT, LATE, EXCUSED
   studentId String
   student   Student  @relation(fields: [studentId], references: [id])
 
@@ -207,7 +208,7 @@ model Fee {
   id          String   @id @default(uuid())
   amount      Float
   dueDate     DateTime
-  status      String   // PENDING, PAID, OVERDUE
+  status      String // PENDING, PAID, OVERDUE
   description String
   studentId   String
   student     Student  @relation(fields: [studentId], references: [id])
@@ -217,15 +218,15 @@ model Fee {
 }
 
 model AcademicYear {
-  id        String             @id @default(uuid())
-  year      Int                @unique
-  status    AcademicYearStatus @default(INACTIVE)
+  id          String             @id @default(uuid())
+  year        Int                @unique
+  status      AcademicYearStatus @default(INACTIVE)
   startDate   DateTime?
-  endDate   DateTime?
-  classes   Class[]
+  endDate     DateTime?
+  classes     Class[]
   feePackages FeePackage[]
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }
 
 enum AcademicYearStatus {
@@ -246,16 +247,16 @@ enum ChargeType {
 }
 
 model FeeItem {
-  id                             String           @id @default(uuid())
+  id                             String     @id @default(uuid())
   name                           String
-  code                           String           @unique
+  code                           String     @unique
   defaultAmount                  Float
-  chargeType                     ChargeType       @default(ONE_TIME)
+  chargeType                     ChargeType @default(ONE_TIME)
   description                    String?
-  isActive                       Boolean          @default(true)
-  isWaivableForReturningStudents Boolean          @default(false)
-  createdAt                      DateTime         @default(now())
-  updatedAt                      DateTime         @updatedAt
+  isActive                       Boolean    @default(true)
+  isWaivableForReturningStudents Boolean    @default(false)
+  createdAt                      DateTime   @default(now())
+  updatedAt                      DateTime   @updatedAt
 
   feePackageItems       FeePackageItem[]
   enrollmentAdjustments EnrollmentFeeAdjustment[]
@@ -289,7 +290,7 @@ model FeePackageItem {
   feePackage   FeePackage @relation(fields: [feePackageId], references: [id], onDelete: Cascade)
   feeItemId    String
   feeItem      FeeItem    @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
-  unitAmount   Float?     
+  unitAmount   Float?
   quantity     Int        @default(1)
   sortOrder    Int        @default(0)
 
@@ -313,16 +314,16 @@ model EnrollmentFeeAdjustment {
   id           String     @id @default(uuid())
   enrollmentId String
   enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  
-  feeItemId    String
-  feeItem      FeeItem    @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
 
-  amount       Float      // The amount to discount/waive from the standard cost
-  reason       String?    // e.g., "Siblings discount", "Registration waived for returning student"
-  quantity     Int?       // Override the default item quantity for this specific enrollment
+  feeItemId String
+  feeItem   FeeItem @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  amount   Float // The amount to discount/waive from the standard cost
+  reason   String? // e.g., "Siblings discount", "Registration waived for returning student"
+  quantity Int? // Override the default item quantity for this specific enrollment
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([enrollmentId, feeItemId])
 }
@@ -331,6 +332,8 @@ enum PaymentMethodEnum {
   CASH
   BANK_TRANSFER
   ONLINE
+  ONLINE_TRANSFER
+  TNG
 }
 
 enum PaymentStatusEnum {
@@ -347,14 +350,14 @@ enum MonthlyFeeAdjustmentType {
 }
 
 model Payment {
-  id           String   @id @default(uuid())
+  id           String     @id @default(uuid())
   enrollmentId String
   enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 
-  amountPaid   Float
-  method       PaymentMethodEnum
-  paidAt       DateTime
-  note         String?
+  amountPaid Float
+  method     PaymentMethodEnum
+  paidAt     DateTime
+  note       String?
 
   monthlyFeeInstanceId String?
   monthlyFeeInstance   MonthlyFeeInstance? @relation(fields: [monthlyFeeInstanceId], references: [id], onDelete: SetNull)
@@ -365,20 +368,23 @@ model Payment {
   miscFeeId String?
   miscFee   MiscFee? @relation(fields: [miscFeeId], references: [id], onDelete: SetNull)
 
+  receiptId String?
+  receipt   Receipt? @relation(fields: [receiptId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
 }
 
 model MonthlyFeeInstance {
-  id           String   @id @default(uuid())
+  id           String     @id @default(uuid())
   enrollmentId String
   enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  
-  feeItemId    String
-  feeItem      FeeItem  @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
-  
-  month        Int      // 1 = Jan, 2 = Feb, ...
-  status       PaymentStatusEnum @default(UNPAID)
-  amountDue    Float    // Snapshotted price after any adjustments
+
+  feeItemId String
+  feeItem   FeeItem @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
+
+  month     Int // 1 = Jan, 2 = Feb, ...
+  status    PaymentStatusEnum @default(UNPAID)
+  amountDue Float // Snapshotted price after any adjustments
 
   originalAmountDue     Float?
   adjustmentType        MonthlyFeeAdjustmentType?
@@ -388,58 +394,80 @@ model MonthlyFeeInstance {
   adjustedAt            DateTime?
   adjustedBy            String?
 
-  payments     Payment[]
+  payments Payment[]
 
   @@unique([enrollmentId, feeItemId, month])
 }
 
 model BookInstance {
-  id           String   @id @default(uuid())
+  id           String     @id @default(uuid())
   enrollmentId String
   enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  
-  feeItemId    String
-  feeItem      FeeItem  @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
-  
-  version      String   // e.g., "1A", "1B", "12"
-  status       PaymentStatusEnum @default(UNPAID)
-  amountDue    Float
 
-  payments     Payment[]
+  feeItemId String
+  feeItem   FeeItem @relation(fields: [feeItemId], references: [id], onDelete: Restrict)
+
+  version   String // e.g., "1A", "1B", "12"
+  status    PaymentStatusEnum @default(UNPAID)
+  amountDue Float
+
+  payments Payment[]
 
   @@unique([enrollmentId, feeItemId, version])
 }
 
 model MiscFee {
-  id           String   @id @default(uuid())
+  id           String     @id @default(uuid())
   enrollmentId String
   enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  
-  name         String
-  amountDue    Float
-  status       PaymentStatusEnum @default(UNPAID)
-  isAdhoc      Boolean @default(false)
 
-  payments     Payment[]
+  name      String
+  amountDue Float
+  status    PaymentStatusEnum @default(UNPAID)
+  isAdhoc   Boolean           @default(false)
+
+  payments Payment[]
 }
 
 model EnrollmentProgramChange {
-  id               String      @id @default(uuid())
-  enrollmentId     String
-  enrollment       Enrollment  @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  
-  effectiveMonth   Int         // 1 = Jan, 2 = Feb, etc.
-  
-  fromProgramType  ProgramType
-  toProgramType    ProgramType
-  
-  fromFeePackageId String?     // Nullable depending on if packages existed
-  toFeePackageId   String?     // The package applied going forward
-  
-  reason           String?     // Optional comment/reason for switching
-  
-  createdAt        DateTime    @default(now())
-  createdByUserId  String?     // Optional: If you want to track which admin did this
+  id           String     @id @default(uuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  effectiveMonth Int // 1 = Jan, 2 = Feb, etc.
+
+  fromProgramType ProgramType
+  toProgramType   ProgramType
+
+  fromFeePackageId String? // Nullable depending on if packages existed
+  toFeePackageId   String? // The package applied going forward
+
+  reason String? // Optional comment/reason for switching
+
+  createdAt       DateTime @default(now())
+  createdByUserId String? // Optional: If you want to track which admin did this
 
   @@index([enrollmentId, effectiveMonth])
+}
+
+model AppSequence {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model Receipt {
+  id           String     @id @default(uuid())
+  receiptNo    String     @unique
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  amount        Float
+  paymentDate   DateTime
+  paymentMethod PaymentMethodEnum
+
+  payments Payment[]
+
+  createdAt DateTime @default(now())
 }
