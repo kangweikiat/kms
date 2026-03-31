@@ -111,16 +111,16 @@ export function LogPaymentModal({
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    {/uniform|pe attire/i.test(itemName) ? 'Size (will appear on receipt)' : 'Reference / Note (Optional)'}
+                                    {/uniform|pe attire|physical exercise attire/i.test(itemName) ? 'Size (will appear on receipt)' : 'Reference / Note (Optional)'}
                                 </label>
                                 <input
                                     type="text"
                                     value={note}
                                     onChange={e => setNote(e.target.value)}
-                                    placeholder={/uniform|pe attire/i.test(itemName) ? 'e.g. Size: M' : 'e.g. Reference #12345'}
+                                    placeholder={/uniform|pe attire|physical exercise attire/i.test(itemName) ? 'e.g. Size: M' : 'e.g. Reference #12345'}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                                 />
-                                {/uniform|pe attire/i.test(itemName) && (
+                                {/uniform|pe attire|physical exercise attire/i.test(itemName) && (
                                     <p className="text-xs text-blue-600 mt-1">💡 Size will be printed on the receipt description.</p>
                                 )}
                             </div>

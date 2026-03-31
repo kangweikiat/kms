@@ -57,7 +57,7 @@ export default async function StudentPaymentDetailsPage(props: {
 
     // Compute startup-only payable items for the lumpsum modal
     // First month school fee IS part of the startup package — subsequent months are auto-distributed by the backend
-    const SIZE_KEYWORDS = ['uniform', 'pe attire']
+    const SIZE_KEYWORDS = ['uniform', 'pe attire', 'physical exercise attire']
     const lumpsumItems: { id: string; name: string; outstanding: number; priority: number; needsSize: boolean }[] = []
     const firstMonthNum = enrollment.monthlyFeeInstances.length > 0 ? enrollment.monthlyFeeInstances[0].month : null
 
@@ -98,16 +98,16 @@ export default async function StudentPaymentDetailsPage(props: {
             const paid = m.payments.reduce((s: number, p: any) => s + p.amountPaid, 0)
             const outstanding = Math.max(0, m.amountDue - paid)
             if (outstanding > 0) {
-                const lowerName = m.name.toLowerCase()
+                const n = m.name.toUpperCase()
                 let priority = 4
-                if (lowerName.includes('deposit')) priority = 2
-                else if (lowerName.includes('registration')) priority = 3
+                if (n.includes('DEPOSIT')) priority = 2
+                else if (n.includes('INSURANCE') || n.includes('UNIFORM') || n.includes('DEPOSIT FEE') || n.includes('EVENT') || n.includes('CHILDCARE BAG') || n.includes('PHOTO') || n.includes('PE ATTIRE') || n.includes('PHYSICAL EXERCISE ATTIRE')) priority = 3
                 lumpsumItems.push({
                     id: m.id,
                     name: m.name,
                     outstanding,
                     priority,
-                    needsSize: SIZE_KEYWORDS.some(k => lowerName.includes(k))
+                    needsSize: SIZE_KEYWORDS.some(k => n.includes(k.toUpperCase()))
                 })
             }
         })

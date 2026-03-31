@@ -142,11 +142,11 @@ export function DownloadReceiptButton({ receiptNo, receiptDetails, enrollment }:
                     else if (n.includes('BOOK MATERIALS')) {
                         cat = 'BOOK'
                     }
-                    else if (n.includes('INSURANCE') || n.includes('UNIFORM') || n.includes('DEPOSIT FEE') || n.includes('EVENT') || n.includes('CHILDCARE BAG') || n.includes('PHOTO') || n.includes('PE ATTIRE')) {
+                    else if (n.includes('INSURANCE') || n.includes('UNIFORM') || n.includes('DEPOSIT FEE') || n.includes('EVENT') || n.includes('CHILDCARE BAG') || n.includes('PHOTO') || n.includes('PE ATTIRE') || n.includes('PHYSICAL EXERCISE ATTIRE')) {
                         cat = 'STARTUP'
                     }
                     detail = p.miscFee.name
-                    const needsSize = n.includes('UNIFORM') || n.includes('PE ATTIRE')
+                    const needsSize = n.includes('UNIFORM') || n.includes('PE ATTIRE') || n.includes('PHYSICAL EXERCISE ATTIRE')
                     if (p.note && needsSize) detail = `${p.miscFee.name} (${p.note})`
                     const totalPaidForInstance = p.miscFee.payments
                         .filter(isHistoricalOrCurrentPayment)
@@ -163,59 +163,6 @@ export function DownloadReceiptButton({ receiptNo, receiptDetails, enrollment }:
                 (categories as any)[cat].balance += balance;
             });
 
-            // Calculate exact total remaining balance for items paid in this receipt
-            let receiptItemsRemainingBalance = 0;
-            Object.values(categories).forEach(cat => receiptItemsRemainingBalance += cat.balance);
-
-            let historicalStartupOutstanding = 0;
-            let historicalMiscOutstanding = 0;
-
-            if (enrollment) {
-                let historicalStartupDue = 0;
-                let historicalStartupPaid = 0;
-                let historicalMiscDue = 0;
-                let historicalMiscPaid = 0;
-
-                enrollment.bookInstances?.forEach((bi: any) => {
-                    historicalStartupDue += bi.amountDue;
-                    const paid = bi.payments.filter(isHistoricalOrCurrentPayment).reduce((s:number, p:any) => s + p.amountPaid, 0);
-                    historicalStartupPaid += paid;
-                });
-
-                enrollment.miscFees?.forEach((mf: any) => {
-                    const mfCreatedTime = mf.createdAt ? new Date(mf.createdAt).getTime() : new Date(enrollment.createdAt).getTime();
-                    if (mfCreatedTime <= new Date(receiptDetails.createdAt).getTime()) {
-                        if (mf.isAdhoc) {
-                            historicalMiscDue += mf.amountDue;
-                            const paid = mf.payments.filter(isHistoricalOrCurrentPayment).reduce((s:number, p:any) => s + p.amountPaid, 0);
-                            historicalMiscPaid += paid;
-                        } else {
-                            historicalStartupDue += mf.amountDue;
-                            const paid = mf.payments.filter(isHistoricalOrCurrentPayment).reduce((s:number, p:any) => s + p.amountPaid, 0);
-                            historicalStartupPaid += paid;
-                        }
-                    }
-                });
-
-                historicalStartupOutstanding = Math.max(0, historicalStartupDue - historicalStartupPaid);
-                historicalMiscOutstanding = Math.max(0, historicalMiscDue - historicalMiscPaid);
-            }
-
-            const hasSchoolFee = categories.SCHOOL.amount > 0;
-            const hasStartup = categories.STARTUP.amount > 0 || categories.BOOK.amount > 0 || categories.REGISTRATION.amount > 0;
-            const hasMisc = categories.OTHER.amount > 0;
-
-            let finalRemainingBalance = 0;
-            
-            if (hasSchoolFee) {
-                finalRemainingBalance += categories.SCHOOL.balance;
-            }
-            if (hasStartup) {
-                finalRemainingBalance += enrollment ? historicalStartupOutstanding : (categories.STARTUP.balance + categories.BOOK.balance + categories.REGISTRATION.balance);
-            }
-            if (hasMisc) {
-                finalRemainingBalance += enrollment ? historicalMiscOutstanding : categories.OTHER.balance;
-            }
 
             const formatMoney = (val: number) => val > 0 ? val.toFixed(2) : '-'
 
@@ -280,19 +227,6 @@ export function DownloadReceiptButton({ receiptNo, receiptDetails, enrollment }:
             doc.setTextColor(37, 99, 235) // text-blue-600
             doc.text(`RM ${receiptDetails.amount.toFixed(2)}`, 185, finalY + 11, { align: 'right' })
 
-            // Extra Remaining Balance Display if there's any pending
-            // We use 0.01 to avoid floating-point imprecision when remaining balance is technically zero (e.g. 0.00000000001)
-            if (finalRemainingBalance > 0.01) {
-                doc.setFont('helvetica', 'normal')
-                doc.setFontSize(8)
-                doc.setTextColor(220, 38, 38) // red-600
-                doc.text(
-                    `Remaining Balance Due: RM ${finalRemainingBalance.toFixed(2)}`,
-                    190,
-                    finalY + 22,
-                    { align: 'right' }
-                )
-            }
 
             // ----- FOOTER -----
             doc.setFont('helvetica', 'normal')
