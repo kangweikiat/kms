@@ -239,12 +239,22 @@ export async function getDashboardData(year: number) {
     try {
         const enrollments = await prisma.enrollment.findMany({
             where: { academicYear: year, status: 'ACTIVE' },
-            include: {
-                student: true,
-                feePackage: true,
-                monthlyFeeInstances: { include: { payments: true } },
-                bookInstances: { include: { payments: true } },
-                miscFees: { include: { payments: true } }
+            select: {
+                id: true,
+                enrollmentLevel: true,
+                programType: true,
+                student: {
+                    select: { id: true, name: true }
+                },
+                monthlyFeeInstances: {
+                    select: { id: true, month: true, amountDue: true, status: true, payments: { select: { amountPaid: true } } }
+                },
+                bookInstances: {
+                    select: { id: true, amountDue: true, status: true, payments: { select: { amountPaid: true } } }
+                },
+                miscFees: {
+                    select: { id: true, amountDue: true, status: true, isAdhoc: true, payments: { select: { amountPaid: true } } }
+                }
             }
         });
 
@@ -365,8 +375,6 @@ export async function getEnrollmentPaymentDetails(enrollmentId: string) {
             where: { id: enrollmentId },
             include: {
                 student: true,
-                feePackage: true,
-                class: true,
                 monthlyFeeInstances: {
                     include: {
                         feeItem: true,

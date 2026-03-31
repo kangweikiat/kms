@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useActionState } from 'react'
+import { useState, useEffect, useActionState } from 'react'
 import { createStudent, updateStudent } from '../../actions'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -35,7 +35,41 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
     const actionFn = student ? updateStudent.bind(null, student.id) : createStudent
     const [state, action, isPending] = useActionState(actionFn, null)
 
-    const [nationality, setNationality] = useState(student?.nationality && student.nationality !== 'Malaysian' ? 'Others' : (student?.nationality || 'Malaysian'))
+    const [nationality, setNationality] = useState(student?.nationality && student.nationality !== 'Malaysian' ? 'Others' : (student?.nationality || 'Malaysian'));
+
+    const [icNo, setIcNo] = useState(state?.fields?.icNo || student?.icNo || '');
+    const formatIC = (value: string) => {
+        const digits = value.replace(/\D/g, '').slice(0, 12);
+        const part1 = digits.slice(0, 6);
+        const part2 = digits.slice(6, 8);
+        const part3 = digits.slice(8, 12);
+        let formatted = part1;
+        if (part2) formatted += '-' + part2;
+        if (part3) formatted += '-' + part3;
+        return formatted;
+    };
+    const [name, setName] = useState(state?.fields?.name || student?.name || '');
+    const formatName = (value: string) => {
+        return value.replace(/\b\w/g, (c) => c.toUpperCase());
+    };
+    const [dob, setDob] = useState(state?.fields?.dob || (student?.dob ? new Date(student.dob).toISOString().split('T')[0] : ''));
+
+    useEffect(() => {
+        const raw = icNo.replace(/\D/g, '');
+        if (raw.length >= 6) {
+            const yearPart = raw.slice(0, 2);
+            const monthPart = raw.slice(2, 4);
+            const dayPart = raw.slice(4, 6);
+            const yearNum = parseInt(yearPart, 10);
+            const currentYearTwoDigits = new Date().getFullYear() % 100;
+            const fullYear = yearNum <= currentYearTwoDigits ? 2000 + yearNum : 1900 + yearNum;
+            const formatted = `${fullYear}-${monthPart.padStart(2, '0')}-${dayPart.padStart(2, '0')}`;
+            setDob(formatted);
+        }
+    }, [icNo]);
+
+
+
 
     // Fallback: if no availableYears passed, provide a sensible default or just the single target year
     const years = availableYears.length > 0 ? availableYears : [{ year: 2026, status: 'ACTIVE', id: 'default' }]
@@ -64,11 +98,27 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="col-span-1 md:col-span-2 space-y-2">
                         <label className="text-sm font-medium text-gray-700">Name <span className="text-red-500">*</span></label>
-                        <input name="name" required type="text" defaultValue={state?.fields?.name || student?.name || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. John Doe" />
+                        <input
+                            name="name"
+                            required
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(formatName(e.target.value))}
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="e.g. John Doe"
+                        />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">IC / MyKid <span className="text-red-500">*</span></label>
-                        <input name="icNo" required type="text" defaultValue={state?.fields?.icNo || student?.icNo || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 150101-01-1234" />
+                        <input
+                            name="icNo"
+                            required
+                            type="text"
+                            value={icNo}
+                            onChange={(e) => setIcNo(formatIC(e.target.value))}
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="e.g. 150101-01-1234"
+                        />
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Date of Birth <span className="text-red-500">*</span></label>
@@ -76,7 +126,8 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                             name="dob"
                             required
                             type="date"
-                            defaultValue={state?.fields?.dob || (student?.dob ? new Date(student.dob).toISOString().split('T')[0] : '')}
+                            value={dob}
+                            onChange={(e) => setDob(e.target.value)}
                             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                     </div>
@@ -98,7 +149,16 @@ export function StudentForm({ student, targetYear, availableYears = [] }: Studen
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Religion</label>
-                        <input name="religion" type="text" defaultValue={state?.fields?.religion || student?.religion || ''} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Islam" />
+                        <select
+                            name="religion"
+                            defaultValue={state?.fields?.religion || student?.religion || 'Islam'}
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                        >
+                            <option value="Islam">Islam</option>
+                            <option value="Buddhist">Buddhist</option>
+                            <option value="Hindu">Hindu</option>
+                            <option value="Others">Others</option>
+                        </select>
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-700">Nationality</label>
